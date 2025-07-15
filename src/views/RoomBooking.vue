@@ -143,101 +143,233 @@
             </div>
           </div>
 
-          <!-- 中间楼宇分类 -->
-          <div class="middle-sidebar">
-            <div class="search-box">
-              <el-input 
-                v-model="searchKeyword" 
-                placeholder="请输入关键字搜索"
-                size="small"
-                :prefix-icon="Search"
-              />
+          <!-- 我的预约内容 -->
+          <div v-if="activeMenuItem === '我的预约'" class="my-bookings">
+            <!-- 搜索筛选区域 -->
+            <div class="search-filters">
+              <div class="filter-row">
+                <div class="filter-item">
+                  <label>借用/预约名称：</label>
+                  <el-input
+                    v-model="searchFilters.name"
+                    placeholder="请输入信息"
+                    size="small"
+                    clearable
+                  />
+                </div>
+                <div class="filter-item">
+                  <label>审核类型：</label>
+                  <el-select v-model="searchFilters.auditType" placeholder="全部" size="small">
+                    <el-option label="全部" value="" />
+                    <el-option label="待审核" value="待审核" />
+                    <el-option label="已审核" value="已审核" />
+                    <el-option label="已拒绝" value="已拒绝" />
+                  </el-select>
+                </div>
+                <div class="filter-item">
+                  <label>使用状态：</label>
+                  <el-select v-model="searchFilters.useStatus" placeholder="全部" size="small">
+                    <el-option label="全部" value="" />
+                    <el-option label="未开始" value="未开始" />
+                    <el-option label="进行中" value="进行中" />
+                    <el-option label="已结束" value="已结束" />
+                  </el-select>
+                </div>
+                <div class="filter-item">
+                  <label>预约时间：</label>
+                  <el-date-picker
+                    v-model="searchFilters.startTime"
+                    type="datetime"
+                    placeholder="请选择开始时间"
+                    size="small"
+                    format="YYYY-MM-DD HH:mm"
+                    value-format="YYYY-MM-DD HH:mm"
+                  />
+                </div>
+                <div class="filter-item">
+                  <el-date-picker
+                    v-model="searchFilters.endTime"
+                    type="datetime"
+                    placeholder="请选择结束时间"
+                    size="small"
+                    format="YYYY-MM-DD HH:mm"
+                    value-format="YYYY-MM-DD HH:mm"
+                  />
+                </div>
+                <div class="filter-actions">
+                  <el-button type="primary" size="small" @click="handleSearch">搜索</el-button>
+                  <el-button size="small" @click="handleReset">重置</el-button>
+                </div>
+              </div>
             </div>
-            <div class="category-tree">
-              <div class="category-item" :class="{ active: activeCategory === '全部' }" @click="setActiveCategory('全部')">
-                <el-icon><folder /></el-icon>
-                <span>全部</span>
-              </div>
-              <div class="category-group">
-                <div class="category-item expandable" @click="toggleCategory('达力楼')">
-                  <el-icon><folder /></el-icon>
-                  <span>达力楼</span>
-                  <el-icon class="expand-icon" :class="{ expanded: expandedCategories.includes('达力楼') }">
-                    <arrow-down />
-                  </el-icon>
-                </div>
-                <div v-show="expandedCategories.includes('达力楼')" class="sub-categories">
-                  <div class="sub-category" :class="{ active: activeCategory === 'B2' }" @click="setActiveCategory('B2')">B2</div>
-                  <div class="sub-category" :class="{ active: activeCategory === 'B1' }" @click="setActiveCategory('B1')">B1</div>
-                  <div class="sub-category" :class="{ active: activeCategory === '1F' }" @click="setActiveCategory('1F')">1F</div>
-                  <div class="sub-category" :class="{ active: activeCategory === '2F' }" @click="setActiveCategory('2F')">2F</div>
-                  <div class="sub-category" :class="{ active: activeCategory === '3F' }" @click="setActiveCategory('3F')">3F</div>
-                  <div class="sub-category" :class="{ active: activeCategory === '4F' }" @click="setActiveCategory('4F')">4F</div>
-                  <div class="sub-category" :class="{ active: activeCategory === '5F' }" @click="setActiveCategory('5F')">5F</div>
-                  <div class="sub-category" :class="{ active: activeCategory === '6F' }" @click="setActiveCategory('6F')">6F</div>
-                </div>
-              </div>
-              <div class="category-item expandable" @click="toggleCategory('成为楼')">
-                <el-icon><folder /></el-icon>
-                <span>成为楼</span>
-                <el-icon class="expand-icon" :class="{ expanded: expandedCategories.includes('成为楼') }">
-                  <arrow-down />
-                </el-icon>
-              </div>
-              <div class="category-item expandable" @click="toggleCategory('爱怡楼')">
-                <el-icon><folder /></el-icon>
-                <span>爱怡楼</span>
-                <el-icon class="expand-icon" :class="{ expanded: expandedCategories.includes('爱怡楼') }">
-                  <arrow-down />
-                </el-icon>
-              </div>
-              <div class="category-item expandable" @click="toggleCategory('博学楼')">
-                <el-icon><folder /></el-icon>
-                <span>博学楼</span>
-                <el-icon class="expand-icon" :class="{ expanded: expandedCategories.includes('博学楼') }">
-                  <arrow-down />
-                </el-icon>
-              </div>
-              <div class="category-item expandable" @click="toggleCategory('正安楼')">
-                <el-icon><folder /></el-icon>
-                <span>正安楼</span>
-                <el-icon class="expand-icon" :class="{ expanded: expandedCategories.includes('正安楼') }">
-                  <arrow-down />
-                </el-icon>
-              </div>
-              <div class="category-item expandable" @click="toggleCategory('其他楼')">
-                <el-icon><folder /></el-icon>
-                <span>其他楼</span>
-                <el-icon class="expand-icon" :class="{ expanded: expandedCategories.includes('其他楼') }">
-                  <arrow-down />
-                </el-icon>
-              </div>
+
+            <!-- 数据表格 -->
+            <div class="booking-table">
+              <el-table
+                :data="paginatedBookings"
+                style="width: 100%"
+                border
+                stripe
+              >
+                <el-table-column prop="bookingName" label="借用/预约名称" min-width="200" />
+                <el-table-column prop="bookingTime" label="预约时间" min-width="200" />
+                <el-table-column prop="description" label="描述" min-width="300" />
+                <el-table-column prop="applicant" label="预约人" width="100" />
+                <el-table-column prop="roomName" label="预约教室" width="150" />
+                <el-table-column prop="auditStatus" label="审核状态" width="100">
+                  <template #default="scope">
+                    <el-tag
+                      :type="getAuditStatusType(scope.row.auditStatus)"
+                      size="small"
+                    >
+                      {{ scope.row.auditStatus }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="useStatus" label="使用状态" width="100">
+                  <template #default="scope">
+                    <el-tag
+                      :type="getUseStatusType(scope.row.useStatus)"
+                      size="small"
+                    >
+                      {{ scope.row.useStatus }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="200">
+                  <template #default="scope">
+                    <el-button
+                      type="primary"
+                      size="small"
+                      @click="handleViewDetails(scope.row)"
+                    >
+                      查看详情
+                    </el-button>
+                    <el-button
+                      v-if="scope.row.auditStatus === '待审核'"
+                      type="danger"
+                      size="small"
+                      @click="handleCancelBooking(scope.row)"
+                    >
+                      取消预约
+                    </el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination">
+              <el-pagination
+                v-model:current-page="bookingPagination.currentPage"
+                v-model:page-size="bookingPagination.pageSize"
+                :page-sizes="[10, 20, 50, 100]"
+                :total="bookingPagination.total"
+                layout="total, sizes, prev, pager, next, jumper"
+                @size-change="handleBookingSizeChange"
+                @current-change="handleBookingCurrentChange"
+              />
             </div>
           </div>
 
-          <!-- 右侧房间列表 -->
-          <div class="room-list">
-            <div class="room-grid">
-              <div 
-                v-for="room in filteredRooms" 
-                :key="room.id"
-                class="room-card"
-                :class="{ unavailable: !room.available }"
-              >
-                <div class="room-header">
-                  <h4>{{ room.name }}</h4>
+          <!-- 房间列表内容 -->
+          <div v-else class="room-booking-content">
+            <!-- 中间楼宇分类 -->
+            <div class="middle-sidebar">
+              <div class="search-box">
+                <el-input 
+                  v-model="searchKeyword" 
+                  placeholder="请输入关键字搜索"
+                  size="small"
+                  :prefix-icon="Search"
+                />
+              </div>
+              <div class="category-tree">
+                <div class="category-item" :class="{ active: activeCategory === '全部' }" @click="setActiveCategory('全部')">
+                  <el-icon><folder /></el-icon>
+                  <span>全部</span>
                 </div>
-                <div class="room-info">
-                  <span class="capacity">可容纳：{{ room.capacity }}</span>
+                <div class="category-group">
+                  <div class="category-item expandable" @click="toggleCategory('达力楼')">
+                    <el-icon><folder /></el-icon>
+                    <span>达力楼</span>
+                    <el-icon class="expand-icon" :class="{ expanded: expandedCategories.includes('达力楼') }">
+                      <arrow-down />
+                    </el-icon>
+                  </div>
+                  <div v-show="expandedCategories.includes('达力楼')" class="sub-categories">
+                    <div class="sub-category" :class="{ active: activeCategory === 'B2' }" @click="setActiveCategory('B2')">B2</div>
+                    <div class="sub-category" :class="{ active: activeCategory === 'B1' }" @click="setActiveCategory('B1')">B1</div>
+                    <div class="sub-category" :class="{ active: activeCategory === '1F' }" @click="setActiveCategory('1F')">1F</div>
+                    <div class="sub-category" :class="{ active: activeCategory === '2F' }" @click="setActiveCategory('2F')">2F</div>
+                    <div class="sub-category" :class="{ active: activeCategory === '3F' }" @click="setActiveCategory('3F')">3F</div>
+                    <div class="sub-category" :class="{ active: activeCategory === '4F' }" @click="setActiveCategory('4F')">4F</div>
+                    <div class="sub-category" :class="{ active: activeCategory === '5F' }" @click="setActiveCategory('5F')">5F</div>
+                    <div class="sub-category" :class="{ active: activeCategory === '6F' }" @click="setActiveCategory('6F')">6F</div>
+                  </div>
                 </div>
-                <div class="room-actions">
-                  <el-button 
-                    :type="room.available ? 'primary' : 'info'"
-                    :disabled="!room.available"
-                    @click="bookRoom(room)"
-                  >
-                    {{ room.available ? '立即预约' : '不可预约' }}
-                  </el-button>
+                <div class="category-item expandable" @click="toggleCategory('成为楼')">
+                  <el-icon><folder /></el-icon>
+                  <span>成为楼</span>
+                  <el-icon class="expand-icon" :class="{ expanded: expandedCategories.includes('成为楼') }">
+                    <arrow-down />
+                  </el-icon>
+                </div>
+                <div class="category-item expandable" @click="toggleCategory('爱怡楼')">
+                  <el-icon><folder /></el-icon>
+                  <span>爱怡楼</span>
+                  <el-icon class="expand-icon" :class="{ expanded: expandedCategories.includes('爱怡楼') }">
+                    <arrow-down />
+                  </el-icon>
+                </div>
+                <div class="category-item expandable" @click="toggleCategory('博学楼')">
+                  <el-icon><folder /></el-icon>
+                  <span>博学楼</span>
+                  <el-icon class="expand-icon" :class="{ expanded: expandedCategories.includes('博学楼') }">
+                    <arrow-down />
+                  </el-icon>
+                </div>
+                <div class="category-item expandable" @click="toggleCategory('正安楼')">
+                  <el-icon><folder /></el-icon>
+                  <span>正安楼</span>
+                  <el-icon class="expand-icon" :class="{ expanded: expandedCategories.includes('正安楼') }">
+                    <arrow-down />
+                  </el-icon>
+                </div>
+                <div class="category-item expandable" @click="toggleCategory('其他楼')">
+                  <el-icon><folder /></el-icon>
+                  <span>其他楼</span>
+                  <el-icon class="expand-icon" :class="{ expanded: expandedCategories.includes('其他楼') }">
+                    <arrow-down />
+                  </el-icon>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右侧房间列表 -->
+            <div class="room-list">
+              <div class="room-grid">
+                <div 
+                  v-for="room in filteredRooms" 
+                  :key="room.id"
+                  class="room-card"
+                  :class="{ unavailable: !room.available }"
+                >
+                  <div class="room-header">
+                    <h4>{{ room.name }}</h4>
+                  </div>
+                  <div class="room-info">
+                    <span class="capacity">可容纳：{{ room.capacity }}</span>
+                  </div>
+                  <div class="room-actions">
+                    <el-button 
+                      :type="room.available ? 'primary' : 'info'"
+                      :disabled="!room.available"
+                      @click="bookRoom(room)"
+                    >
+                      {{ room.available ? '立即预约' : '不可预约' }}
+                    </el-button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -249,7 +381,7 @@
 </template>
 
 <script>
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, nextTick, computed, reactive } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 
 export default {
@@ -269,10 +401,166 @@ export default {
     const activeTab = ref('数据看板')
     
     // 借用管理相关
-    const activeMenuItem = ref('借用预约列表')
+    const activeMenuItem = ref('我的预约')
     const activeCategory = ref('全部')
     const expandedCategories = ref(['达力楼'])
     const searchKeyword = ref('')
+    
+    // 我的预约相关
+    const searchFilters = reactive({
+      name: '',
+      auditType: '',
+      useStatus: '',
+      startTime: '',
+      endTime: ''
+    })
+    
+    const bookingPagination = reactive({
+      currentPage: 1,
+      pageSize: 10,
+      total: 0
+    })
+    
+    // 预约数据
+    const bookingData = ref([
+      {
+        id: 1,
+        bookingName: '【教师人员专】的配置管理',
+        bookingTime: '2025.04.24 第一节次、第二节次、第三节次、第四节次',
+        description: '各类通过这里发布各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息',
+        applicant: '王玲',
+        roomName: '多媒体教室（101）',
+        auditStatus: '待审核',
+        useStatus: '未开始'
+      },
+      {
+        id: 2,
+        bookingName: '【教师人员专】的配置管理',
+        bookingTime: '2025.04.24 第一节次、第二节次、第三节次、第四节次',
+        description: '各类通过这里发布各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息',
+        applicant: '王玲',
+        roomName: '多媒体教室（102）',
+        auditStatus: '待审核',
+        useStatus: '未开始'
+      },
+      {
+        id: 3,
+        bookingName: '【教师人员专】的配置管理',
+        bookingTime: '2025.04.24 第一节次、第二节次、第三节次、第四节次',
+        description: '各类通过这里发布各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息',
+        applicant: '王玲',
+        roomName: '多媒体教室（103）',
+        auditStatus: '待审核',
+        useStatus: '未开始'
+      },
+      {
+        id: 4,
+        bookingName: '【教师人员专】的配置管理',
+        bookingTime: '2025.04.24 第一节次、第二节次、第三节次、第四节次',
+        description: '各类通过这里发布各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息',
+        applicant: '王玲',
+        roomName: '多媒体教室（104）',
+        auditStatus: '通过',
+        useStatus: '未开始'
+      },
+      {
+        id: 5,
+        bookingName: '【教师人员专】的配置管理',
+        bookingTime: '2025.04.24 第一节次、第二节次、第三节次、第四节次',
+        description: '各类通过这里发布各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息',
+        applicant: '王玲',
+        roomName: '多媒体教室（105）',
+        auditStatus: '通过',
+        useStatus: '进行中'
+      },
+      {
+        id: 6,
+        bookingName: '【教师人员专】的配置管理',
+        bookingTime: '2025.04.24 第一节次、第二节次、第三节次、第四节次',
+        description: '各类通过这里发布各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息',
+        applicant: '王玲',
+        roomName: '多媒体教室（106）',
+        auditStatus: '拒绝',
+        useStatus: '/'
+      },
+      {
+        id: 7,
+        bookingName: '【教师人员专】的配置管理',
+        bookingTime: '2025.04.24 第一节次、第二节次、第三节次、第四节次',
+        description: '各类通过这里发布各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息',
+        applicant: '王玲',
+        roomName: '多媒体教室（107）',
+        auditStatus: '拒绝',
+        useStatus: '/'
+      },
+      {
+        id: 8,
+        bookingName: '【教师人员专】的配置管理',
+        bookingTime: '2025.04.24 第一节次、第二节次、第三节次、第四节次',
+        description: '各类通过这里发布各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息',
+        applicant: '王玲',
+        roomName: '多媒体教室（108）',
+        auditStatus: '通过',
+        useStatus: '已结束'
+      },
+      {
+        id: 9,
+        bookingName: '【教师人员专】的配置管理',
+        bookingTime: '2025.04.24 第一节次、第二节次、第三节次、第四节次',
+        description: '各类通过这里发布各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息',
+        applicant: '王玲',
+        roomName: '多媒体教室（109）',
+        auditStatus: '通过',
+        useStatus: '已结束'
+      },
+      {
+        id: 10,
+        bookingName: '【教师人员专】的配置管理',
+        bookingTime: '2025.04.24 第一节次、第二节次、第三节次、第四节次',
+        description: '各类通过这里发布各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息',
+        applicant: '王玲',
+        roomName: '多媒体教室（110）',
+        auditStatus: '已取消',
+        useStatus: '/'
+      }
+    ])
+    
+    // 过滤后的预约数据
+    const filteredBookings = computed(() => {
+      let filtered = bookingData.value
+      
+      // 按名称筛选
+      if (searchFilters.name) {
+        filtered = filtered.filter(booking => 
+          booking.bookingName.includes(searchFilters.name)
+        )
+      }
+      
+      // 按审核类型筛选
+      if (searchFilters.auditType) {
+        filtered = filtered.filter(booking => 
+          booking.auditStatus === searchFilters.auditType
+        )
+      }
+      
+      // 按使用状态筛选
+      if (searchFilters.useStatus) {
+        filtered = filtered.filter(booking => 
+          booking.useStatus === searchFilters.useStatus
+        )
+      }
+      
+      return filtered
+    })
+    
+    // 分页后的数据
+    const paginatedBookings = computed(() => {
+      const start = (bookingPagination.currentPage - 1) * bookingPagination.pageSize
+      const end = start + bookingPagination.pageSize
+      const filtered = filteredBookings.value
+      bookingPagination.total = filtered.length
+      return filtered.slice(start, end)
+    })
     
     // 图表引用
     const studentChart = ref(null)
@@ -329,6 +617,68 @@ export default {
       activeMenuItem.value = menuItem
       console.log('切换到菜单项:', menuItem)
     }
+    
+    // 我的预约相关方法
+    const handleSearch = () => {
+      bookingPagination.currentPage = 1
+      console.log('搜索条件:', searchFilters)
+    }
+    
+    const handleReset = () => {
+      Object.assign(searchFilters, {
+        name: '',
+        auditType: '',
+        useStatus: '',
+        startTime: '',
+        endTime: ''
+      })
+      bookingPagination.currentPage = 1
+    }
+    
+    const handleBookingSizeChange = (size) => {
+      bookingPagination.pageSize = size
+      bookingPagination.currentPage = 1
+    }
+    
+    const handleBookingCurrentChange = (page) => {
+      bookingPagination.currentPage = page
+    }
+    
+    const getAuditStatusType = (status) => {
+      switch (status) {
+        case '待审核':
+          return 'warning'
+        case '通过':
+          return 'success'
+        case '拒绝':
+          return 'danger'
+        case '已取消':
+          return 'info'
+        default:
+          return 'info'
+      }
+    }
+    
+    const getUseStatusType = (status) => {
+      switch (status) {
+        case '未开始':
+          return 'warning'
+        case '进行中':
+          return 'success'
+        case '已结束':
+          return 'info'
+        default:
+          return 'info'
+      }
+    }
+    
+    const handleViewDetails = (booking) => {
+      console.log('查看详情:', booking)
+    }
+    
+    const handleCancelBooking = (booking) => {
+      console.log('取消预约:', booking)
+    }
 
     // 设置激活的分类
     const setActiveCategory = (category) => {
@@ -350,7 +700,6 @@ export default {
     const bookRoom = (room) => {
       if (room.available) {
         console.log('预约房间:', room.name)
-        // 这里可以打开预约弹窗或跳转到预约页面
       }
     }
 
@@ -389,7 +738,7 @@ export default {
       drawPieChart(teacherChart.value, teacherData)
     }
 
-    // 绘制饼图（模拟）
+    // 绘制饼图
     const drawPieChart = (element, data) => {
       if (!element) return
       
@@ -431,27 +780,7 @@ export default {
     const initTrendChart = () => {
       if (!trendChart.value) return
       
-      const dates = []
-      const approvedData = []
-      const pendingData = []
-      
-      for (let i = 14; i >= 0; i--) {
-        const date = new Date()
-        date.setDate(date.getDate() - i)
-        dates.push(date.toISOString().split('T')[0])
-        
-        approvedData.push(Math.floor(Math.random() * 100))
-        pendingData.push(Math.floor(Math.random() * 50))
-      }
-      
-      drawLineChart(trendChart.value, dates, approvedData, pendingData)
-    }
-
-    // 绘制折线图（模拟）
-    const drawLineChart = (element, dates, approvedData, pendingData) => {
-      if (!element) return
-      
-      element.innerHTML = `
+      trendChart.value.innerHTML = `
         <div style="width: 100%; height: 300px; background: #f9f9f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #666;">
           <div style="text-align: center;">
             <div style="font-size: 16px; margin-bottom: 10px;">趋势图表区域</div>
@@ -480,6 +809,11 @@ export default {
       activeCategory,
       expandedCategories,
       searchKeyword,
+      searchFilters,
+      bookingData,
+      filteredBookings,
+      paginatedBookings,
+      bookingPagination,
       rooms,
       filteredRooms,
       studentChart,
@@ -492,7 +826,15 @@ export default {
       toggleCategory,
       bookRoom,
       setTimeRange,
-      queryData
+      queryData,
+      handleSearch,
+      handleReset,
+      handleBookingSizeChange,
+      handleBookingCurrentChange,
+      getAuditStatusType,
+      getUseStatusType,
+      handleViewDetails,
+      handleCancelBooking
     }
   }
 }
@@ -768,7 +1110,7 @@ export default {
 
 /* 左侧功能菜单 */
 .left-sidebar {
-  width: 200px;
+  width: 250px;
   background: white;
   border-right: 1px solid #e8e8e8;
   display: flex;
@@ -776,7 +1118,7 @@ export default {
 }
 
 .sidebar-header {
-  padding: 15px;
+  padding: 15px 20px;
   border-bottom: 1px solid #e8e8e8;
   background: #4A90E2;
   color: white;
@@ -784,7 +1126,7 @@ export default {
 
 .sidebar-header h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -793,15 +1135,16 @@ export default {
 }
 
 .menu-item {
-  padding: 12px 15px;
+  padding: 15px 20px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
   color: #666;
   border-left: 3px solid transparent;
   transition: all 0.3s;
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.4;
 }
 
 .menu-item:hover {
@@ -817,7 +1160,7 @@ export default {
 
 /* 中间楼宇分类 */
 .middle-sidebar {
-  width: 250px;
+  width: 220px;
   background: white;
   border-right: 1px solid #e8e8e8;
   display: flex;
@@ -974,6 +1317,68 @@ export default {
   font-weight: 500;
 }
 
+/* 我的预约页面样式 */
+.my-bookings {
+  flex: 1;
+  padding: 20px;
+  background: #f9f9f9;
+}
+
+.search-filters {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 200px;
+}
+
+.filter-item label {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.booking-table {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.room-booking-content {
+  display: flex;
+  flex: 1;
+}
+
 @media (max-width: 1200px) {
   .booking-layout {
     flex-direction: column;
@@ -991,6 +1396,15 @@ export default {
   .middle-sidebar {
     max-height: 200px;
   }
+  
+  .filter-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .filter-item {
+    min-width: 100%;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1000,6 +1414,27 @@ export default {
   
   .left-sidebar, .middle-sidebar {
     max-height: 120px;
+  }
+  
+  .my-bookings {
+    padding: 15px;
+  }
+  
+  .search-filters {
+    padding: 15px;
+  }
+  
+  .booking-table {
+    padding: 15px;
+  }
+  
+  .filter-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .filter-actions .el-button {
+    width: 100%;
   }
 }
 </style>
