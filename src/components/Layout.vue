@@ -67,6 +67,12 @@
           <span>房屋管理</span>
         </div>
         <div class="nav-item" 
+             :class="{ active: isAccessControlActive }"
+             @click="navigateTo('/access-control/dashboard')">
+          <el-icon><lock /></el-icon>
+          <span>门禁管理</span>
+        </div>
+        <div class="nav-item" 
              :class="{ active: $route.name === 'RoleManagement' }"
              @click="navigateTo('/role-management')">
           <el-icon><key /></el-icon>
@@ -113,11 +119,20 @@ export default {
         'PositionManagement': '职务管理',
         'LevelManagement': '等级管理',
         'HouseManagement': '房屋管理',
+        'AccessControlDashboard': '门禁管理',
+        'AccessControlRecords': '门禁管理 - 通行记录',
+        'AccessControlPermissions': '门禁管理 - 权限分配',
+        'AccessControlDeviceManagement': '门禁管理 - 设备管理',
         'RoleManagement': '角色管理',
         'AdminManagement': '管理员管理',
         'PersonalCenter': '个人中心'
       }
       return titleMap[route.name] || '综合管理平台'
+    })
+
+    // 判断是否是门禁管理相关页面
+    const isAccessControlActive = computed(() => {
+      return route.path.startsWith('/access-control')
     })
 
     const navigateTo = (path) => {
@@ -136,6 +151,7 @@ export default {
 
     return {
       pageTitle,
+      isAccessControlActive,
       navigateTo,
       goToPersonalCenter,
       logout
