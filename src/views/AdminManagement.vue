@@ -151,10 +151,10 @@
       </div>
     </div>
 
-    <!-- 添加管理员弹窗 -->
+    <!-- 编辑管理员弹窗 -->
     <el-dialog
       v-model="adminDialogVisible"
-      :title="isEditAdmin ? '编辑管理员' : '添加管理员'"
+      title="编辑管理员"
       width="600px"
       :before-close="handleAdminDialogClose"
     >
@@ -347,9 +347,7 @@ export default {
     }
 
     const handleAddAdmin = () => {
-      isEditAdmin.value = false
-      resetAdminForm()
-      adminDialogVisible.value = true
+      router.push('/add-admin')
     }
 
     const handleEditAdmin = (row) => {
@@ -441,21 +439,7 @@ export default {
           }
           ElMessage.success('管理员信息更新成功')
         } else {
-          // 新增管理员
-          const newAdmin = {
-            id: adminTableData.value.length + 1,
-            ...adminForm,
-            roleName: roleMap[adminForm.roleId].name,
-            roleColor: roleMap[adminForm.roleId].color,
-            addTime: new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
-            loginStrategy: '/',
-            wechatPhone: '/',
-            wechatBindTime: '/',
-            status: 'normal'
-          }
-          adminTableData.value.push(newAdmin)
-          pagination.total += 1
-          ElMessage.success('管理员添加成功')
+          ElMessage.success('管理员信息更新成功')
         }
         
         handleAdminDialogClose()
