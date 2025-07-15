@@ -136,15 +136,136 @@
                 <el-icon><user /></el-icon>
                 <span>我的预约</span>
               </div>
-              <div class="menu-item" :class="{ active: activeMenuItem === '全部借用房源列表' }" @click="setActiveMenuItem('全部借用房源列表')">
+              <div class="menu-item" :class="{ active: activeMenuItem === '全部借用列表' }" @click="setActiveMenuItem('全部借用列表')">
                 <el-icon><office-building /></el-icon>
-                <span>全部借用房源列表</span>
+                <span>全部借用列表</span>
               </div>
             </div>
           </div>
 
+          <!-- 全部借用列表内容 -->
+          <div v-if="activeMenuItem === '全部借用列表'" class="all-bookings">
+            <!-- 搜索筛选区域 -->
+            <div class="search-filters">
+              <div class="filter-row">
+                <div class="filter-item">
+                  <label>借用/预约名称：</label>
+                  <el-input
+                    v-model="allBookingFilters.name"
+                    placeholder="请输入信息"
+                    size="small"
+                    clearable
+                  />
+                </div>
+                <div class="filter-item">
+                  <label>审核类型：</label>
+                  <el-select v-model="allBookingFilters.auditType" placeholder="全部" size="small">
+                    <el-option label="全部" value="" />
+                    <el-option label="待审核" value="待审核" />
+                    <el-option label="已审核" value="已审核" />
+                    <el-option label="已拒绝" value="已拒绝" />
+                  </el-select>
+                </div>
+                <div class="filter-item">
+                  <label>使用状态：</label>
+                  <el-select v-model="allBookingFilters.useStatus" placeholder="全部" size="small">
+                    <el-option label="全部" value="" />
+                    <el-option label="未开始" value="未开始" />
+                    <el-option label="进行中" value="进行中" />
+                    <el-option label="已结束" value="已结束" />
+                  </el-select>
+                </div>
+                <div class="filter-item">
+                  <label>预约时间：</label>
+                  <el-date-picker
+                    v-model="allBookingFilters.startTime"
+                    type="datetime"
+                    placeholder="请选择开始时间"
+                    size="small"
+                    format="YYYY-MM-DD HH:mm"
+                    value-format="YYYY-MM-DD HH:mm"
+                  />
+                </div>
+                <div class="filter-item">
+                  <el-date-picker
+                    v-model="allBookingFilters.endTime"
+                    type="datetime"
+                    placeholder="请选择结束时间"
+                    size="small"
+                    format="YYYY-MM-DD HH:mm"
+                    value-format="YYYY-MM-DD HH:mm"
+                  />
+                </div>
+                <div class="filter-actions">
+                  <el-button type="primary" size="small" @click="handleAllBookingSearch">搜索</el-button>
+                  <el-button size="small" @click="handleAllBookingReset">重置</el-button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="booking-table">
+              <el-table
+                :data="paginatedAllBookings"
+                style="width: 100%"
+                border
+                stripe
+              >
+                <el-table-column prop="bookingName" label="借用/预约名称" min-width="200" />
+                <el-table-column prop="bookingTime" label="预约时间" min-width="200" />
+                <el-table-column prop="description" label="描述" min-width="300" />
+                <el-table-column prop="applicant" label="预约人" width="100" />
+                <el-table-column prop="roomName" label="预约教室" width="150" />
+                <el-table-column prop="auditStatus" label="审核状态" width="100">
+                  <template #default="scope">
+                    <el-tag
+                      :type="getAuditStatusType(scope.row.auditStatus)"
+                      size="small"
+                    >
+                      {{ scope.row.auditStatus }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="useStatus" label="使用状态" width="100">
+                  <template #default="scope">
+                    <el-tag
+                      :type="getUseStatusType(scope.row.useStatus)"
+                      size="small"
+                    >
+                      {{ scope.row.useStatus }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="150">
+                  <template #default="scope">
+                    <el-button
+                      type="primary"
+                      size="small"
+                      @click="handleViewDetails(scope.row)"
+                    >
+                      查看详情
+                    </el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination">
+              <el-pagination
+                v-model:current-page="allBookingPagination.currentPage"
+                v-model:page-size="allBookingPagination.pageSize"
+                :page-sizes="[10, 20, 50, 100]"
+                :total="allBookingPagination.total"
+                layout="total, sizes, prev, pager, next, jumper"
+                @size-change="handleAllBookingSizeChange"
+                @current-change="handleAllBookingCurrentChange"
+              />
+            </div>
+          </div>
+
           <!-- 我的预约内容 -->
-          <div v-if="activeMenuItem === '我的预约'" class="my-bookings">
+          <div v-else-if="activeMenuItem === '我的预约'" class="my-bookings">
             <!-- 搜索筛选区域 -->
             <div class="search-filters">
               <div class="filter-row">
@@ -421,6 +542,125 @@ export default {
       total: 0
     })
     
+    // 全部借用列表相关
+    const allBookingFilters = reactive({
+      name: '',
+      auditType: '',
+      useStatus: '',
+      startTime: '',
+      endTime: ''
+    })
+    
+    const allBookingPagination = reactive({
+      currentPage: 1,
+      pageSize: 10,
+      total: 0
+    })
+    
+    // 全部借用数据（包含所有用户的预约记录）
+    const allBookingData = ref([
+      {
+        id: 1,
+        bookingName: '【教师人员专】的配置管理',
+        bookingTime: '2025.04.24 第一节次、第二节次、第三节次、第四节次',
+        description: '各类通过这里发布各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息进行各类信息',
+        applicant: '张老师',
+        roomName: '多媒体教室（101）',
+        auditStatus: '待审核',
+        useStatus: '未开始'
+      },
+      {
+        id: 2,
+        bookingName: '【学生活动】社团会议',
+        bookingTime: '2025.04.25 第一节次、第二节次',
+        description: '学生社团定期会议活动安排',
+        applicant: '李同学',
+        roomName: '多媒体教室（102）',
+        auditStatus: '通过',
+        useStatus: '未开始'
+      },
+      {
+        id: 3,
+        bookingName: '【教师培训】新教师培训',
+        bookingTime: '2025.04.26 第一节次、第二节次、第三节次',
+        description: '新入职教师培训活动',
+        applicant: '王主任',
+        roomName: '多媒体教室（103）',
+        auditStatus: '通过',
+        useStatus: '进行中'
+      },
+      {
+        id: 4,
+        bookingName: '【学术讲座】计算机前沿技术',
+        bookingTime: '2025.04.27 第一节次、第二节次',
+        description: '计算机学院学术讲座活动',
+        applicant: '赵教授',
+        roomName: '多媒体教室（104）',
+        auditStatus: '拒绝',
+        useStatus: '/'
+      },
+      {
+        id: 5,
+        bookingName: '【实验课程】物理实验',
+        bookingTime: '2025.04.28 第一节次、第二节次、第三节次、第四节次',
+        description: '物理学院实验课程安排',
+        applicant: '陈老师',
+        roomName: '多媒体教室（105）',
+        auditStatus: '通过',
+        useStatus: '已结束'
+      },
+      {
+        id: 6,
+        bookingName: '【考试安排】期中考试',
+        bookingTime: '2025.04.29 第一节次、第二节次、第三节次',
+        description: '期中考试安排',
+        applicant: '教务处',
+        roomName: '多媒体教室（106）',
+        auditStatus: '通过',
+        useStatus: '已结束'
+      },
+      {
+        id: 7,
+        bookingName: '【会议室预约】部门会议',
+        bookingTime: '2025.04.30 第一节次、第二节次',
+        description: '部门例会安排',
+        applicant: '办公室',
+        roomName: '多媒体教室（107）',
+        auditStatus: '已取消',
+        useStatus: '/'
+      },
+      {
+        id: 8,
+        bookingName: '【学生活动】文艺演出',
+        bookingTime: '2025.05.01 第一节次、第二节次、第三节次',
+        description: '学生文艺演出活动',
+        applicant: '学生会',
+        roomName: '多媒体教室（108）',
+        auditStatus: '待审核',
+        useStatus: '未开始'
+      },
+      {
+        id: 9,
+        bookingName: '【教师研讨】教学研讨会',
+        bookingTime: '2025.05.02 第一节次、第二节次',
+        description: '教师教学研讨活动',
+        applicant: '教研室',
+        roomName: '多媒体教室（109）',
+        auditStatus: '通过',
+        useStatus: '未开始'
+      },
+      {
+        id: 10,
+        bookingName: '【学术会议】国际会议',
+        bookingTime: '2025.05.03 第一节次、第二节次、第三节次、第四节次',
+        description: '国际学术会议活动',
+        applicant: '国际处',
+        roomName: '多媒体教室（110）',
+        auditStatus: '通过',
+        useStatus: '未开始'
+      }
+    ])
+    
     // 预约数据
     const bookingData = ref([
       {
@@ -562,6 +802,43 @@ export default {
       return filtered.slice(start, end)
     })
     
+    // 过滤后的全部借用数据
+    const filteredAllBookings = computed(() => {
+      let filtered = allBookingData.value
+      
+      // 按名称筛选
+      if (allBookingFilters.name) {
+        filtered = filtered.filter(booking => 
+          booking.bookingName.includes(allBookingFilters.name)
+        )
+      }
+      
+      // 按审核类型筛选
+      if (allBookingFilters.auditType) {
+        filtered = filtered.filter(booking => 
+          booking.auditStatus === allBookingFilters.auditType
+        )
+      }
+      
+      // 按使用状态筛选
+      if (allBookingFilters.useStatus) {
+        filtered = filtered.filter(booking => 
+          booking.useStatus === allBookingFilters.useStatus
+        )
+      }
+      
+      return filtered
+    })
+    
+    // 分页后的全部借用数据
+    const paginatedAllBookings = computed(() => {
+      const start = (allBookingPagination.currentPage - 1) * allBookingPagination.pageSize
+      const end = start + allBookingPagination.pageSize
+      const filtered = filteredAllBookings.value
+      allBookingPagination.total = filtered.length
+      return filtered.slice(start, end)
+    })
+    
     // 图表引用
     const studentChart = ref(null)
     const teacherChart = ref(null)
@@ -642,6 +919,32 @@ export default {
     
     const handleBookingCurrentChange = (page) => {
       bookingPagination.currentPage = page
+    }
+    
+    // 全部借用列表相关方法
+    const handleAllBookingSearch = () => {
+      allBookingPagination.currentPage = 1
+      console.log('全部借用搜索条件:', allBookingFilters)
+    }
+    
+    const handleAllBookingReset = () => {
+      Object.assign(allBookingFilters, {
+        name: '',
+        auditType: '',
+        useStatus: '',
+        startTime: '',
+        endTime: ''
+      })
+      allBookingPagination.currentPage = 1
+    }
+    
+    const handleAllBookingSizeChange = (size) => {
+      allBookingPagination.pageSize = size
+      allBookingPagination.currentPage = 1
+    }
+    
+    const handleAllBookingCurrentChange = (page) => {
+      allBookingPagination.currentPage = page
     }
     
     const getAuditStatusType = (status) => {
@@ -814,6 +1117,11 @@ export default {
       filteredBookings,
       paginatedBookings,
       bookingPagination,
+      allBookingFilters,
+      allBookingData,
+      filteredAllBookings,
+      paginatedAllBookings,
+      allBookingPagination,
       rooms,
       filteredRooms,
       studentChart,
@@ -831,6 +1139,10 @@ export default {
       handleReset,
       handleBookingSizeChange,
       handleBookingCurrentChange,
+      handleAllBookingSearch,
+      handleAllBookingReset,
+      handleAllBookingSizeChange,
+      handleAllBookingCurrentChange,
       getAuditStatusType,
       getUseStatusType,
       handleViewDetails,
@@ -1110,7 +1422,7 @@ export default {
 
 /* 左侧功能菜单 */
 .left-sidebar {
-  width: 250px;
+  width: 300px;
   background: white;
   border-right: 1px solid #e8e8e8;
   display: flex;
@@ -1118,7 +1430,7 @@ export default {
 }
 
 .sidebar-header {
-  padding: 15px 20px;
+  padding: 20px 25px;
   border-bottom: 1px solid #e8e8e8;
   background: #4A90E2;
   color: white;
@@ -1126,7 +1438,7 @@ export default {
 
 .sidebar-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -1135,16 +1447,17 @@ export default {
 }
 
 .menu-item {
-  padding: 15px 20px;
+  padding: 20px 25px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
   color: #666;
   border-left: 3px solid transparent;
   transition: all 0.3s;
-  font-size: 15px;
-  line-height: 1.4;
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 
 .menu-item:hover {
@@ -1160,7 +1473,7 @@ export default {
 
 /* 中间楼宇分类 */
 .middle-sidebar {
-  width: 220px;
+  width: 200px;
   background: white;
   border-right: 1px solid #e8e8e8;
   display: flex;
@@ -1317,8 +1630,9 @@ export default {
   font-weight: 500;
 }
 
-/* 我的预约页面样式 */
-.my-bookings {
+/* 我的预约和全部借用列表页面样式 */
+.my-bookings,
+.all-bookings {
   flex: 1;
   padding: 20px;
   background: #f9f9f9;
