@@ -53,10 +53,6 @@
         <!-- 右侧记录信息 -->
         <div class="main-content">
           <div class="content-header">
-            <div class="section-titles">
-              <h3>终端信息</h3>
-              <h3>记录信息</h3>
-            </div>
             <el-button type="primary" @click="exportRecords">导出</el-button>
           </div>
 
@@ -69,11 +65,12 @@
                   v-model="searchForm.keyword"
                   placeholder="请输入人员姓名/工号/联系方式"
                   clearable
+                  style="width: 200px"
                 />
               </div>
               <div class="search-item">
                 <label>开门方式：</label>
-                <el-select v-model="searchForm.openMethod" placeholder="全部">
+                <el-select v-model="searchForm.openMethod" placeholder="全部" style="width: 120px">
                   <el-option label="全部" value="" />
                   <el-option label="人脸识别" value="face" />
                   <el-option label="刷卡" value="card" />
@@ -82,22 +79,21 @@
               </div>
               <div class="search-item">
                 <label>通行类型：</label>
-                <el-select v-model="searchForm.accessType" placeholder="全部">
+                <el-select v-model="searchForm.accessType" placeholder="全部" style="width: 120px">
                   <el-option label="全部" value="" />
                   <el-option label="会议权限" value="meeting" />
                   <el-option label="临时权限" value="temporary" />
                   <el-option label="永久权限" value="permanent" />
                 </el-select>
               </div>
-            </div>
-            <div class="search-row">
-              <div class="search-item date-range">
+              <div class="search-item">
                 <label>通行时间：</label>
                 <el-date-picker
                   v-model="searchForm.startTime"
                   type="datetime"
                   placeholder="请选择开始时间"
                   format="YYYY-MM-DD HH:mm:ss"
+                  style="width: 160px"
                 />
                 <span class="separator">~</span>
                 <el-date-picker
@@ -105,6 +101,7 @@
                   type="datetime"
                   placeholder="请选择结束时间"
                   format="YYYY-MM-DD HH:mm:ss"
+                  style="width: 160px"
                 />
               </div>
               <div class="search-buttons">
@@ -117,25 +114,25 @@
           <!-- 记录表格 -->
           <div class="table-area">
             <el-table :data="recordsList" style="width: 100%" stripe>
-              <el-table-column prop="name" label="姓名" width="80" />
-              <el-table-column prop="gender" label="性别" width="60" />
-              <el-table-column prop="jobNumber" label="工号" width="100" />
-              <el-table-column prop="contactMethod" label="联系方式" width="120" />
-              <el-table-column prop="openMethod" label="开门方式" width="100">
+              <el-table-column prop="name" label="姓名" width="100" />
+              <el-table-column prop="gender" label="性别" width="80" />
+              <el-table-column prop="jobNumber" label="工号" width="120" />
+              <el-table-column prop="contactMethod" label="联系方式" width="140" />
+              <el-table-column prop="openMethod" label="开门方式" width="120">
                 <template #default="scope">
-                  <el-tag v-if="scope.row.openMethod === '人脸识别'" type="success">人脸识别</el-tag>
-                  <el-tag v-else-if="scope.row.openMethod === '刷卡'" type="primary">刷卡</el-tag>
-                  <el-tag v-else-if="scope.row.openMethod === '远程开门'" type="warning">远程开门</el-tag>
-                  <el-tag v-else>{{ scope.row.openMethod }}</el-tag>
+                  <el-tag v-if="scope.row.openMethod === '人脸识别'" type="success" size="small">人脸识别</el-tag>
+                  <el-tag v-else-if="scope.row.openMethod === '刷卡'" type="primary" size="small">刷卡</el-tag>
+                  <el-tag v-else-if="scope.row.openMethod === '远程开门'" type="warning" size="small">远程开门</el-tag>
+                  <el-tag v-else size="small">{{ scope.row.openMethod }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="accessTime" label="通行时间" width="140" />
-              <el-table-column prop="accessType" label="通行类型" width="100">
+              <el-table-column prop="accessTime" label="通行时间" width="160" />
+              <el-table-column prop="accessType" label="通行类型">
                 <template #default="scope">
-                  <el-tag v-if="scope.row.accessType === '会议权限'" type="success">会议权限</el-tag>
-                  <el-tag v-else-if="scope.row.accessType === '临时权限'" type="warning">临时权限</el-tag>
-                  <el-tag v-else-if="scope.row.accessType === '永久权限'" type="primary">永久权限</el-tag>
-                  <el-tag v-else>{{ scope.row.accessType }}</el-tag>
+                  <el-tag v-if="scope.row.accessType === '会议权限'" type="success" size="small">会议权限</el-tag>
+                  <el-tag v-else-if="scope.row.accessType === '临时权限'" type="warning" size="small">临时权限</el-tag>
+                  <el-tag v-else-if="scope.row.accessType === '永久权限'" type="primary" size="small">永久权限</el-tag>
+                  <el-tag v-else size="small">{{ scope.row.accessType }}</el-tag>
                 </template>
               </el-table-column>
             </el-table>
@@ -553,21 +550,9 @@ export default {
 
 .content-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 20px;
-}
-
-.section-titles {
-  display: flex;
-  gap: 200px;
-}
-
-.section-titles h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
 }
 
 .search-area {
@@ -581,18 +566,15 @@ export default {
 .search-row {
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 15px;
-}
-
-.search-row:last-child {
-  margin-bottom: 0;
+  gap: 15px;
+  flex-wrap: wrap;
 }
 
 .search-item {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .search-item label {
@@ -600,10 +582,7 @@ export default {
   font-size: 14px;
   color: #333;
   font-weight: 500;
-}
-
-.date-range {
-  flex: 1;
+  min-width: 70px;
 }
 
 .separator {
@@ -614,6 +593,7 @@ export default {
 .search-buttons {
   display: flex;
   gap: 10px;
+  margin-left: auto;
 }
 
 .table-area {
@@ -632,15 +612,15 @@ export default {
 
 /* Element Plus 组件样式覆盖 */
 :deep(.el-input) {
-  width: 200px;
+  width: auto;
 }
 
 :deep(.el-select) {
-  width: 120px;
+  width: auto;
 }
 
 :deep(.el-date-editor) {
-  width: 180px;
+  width: auto;
 }
 
 :deep(.el-table) {
@@ -663,11 +643,7 @@ export default {
 /* 响应式调整 */
 @media (max-width: 1400px) {
   .search-row {
-    flex-wrap: wrap;
-  }
-  
-  .section-titles {
-    gap: 100px;
+    gap: 10px;
   }
 }
 
@@ -679,10 +655,6 @@ export default {
   .sidebar {
     width: 100%;
     height: 300px;
-  }
-  
-  .section-titles {
-    gap: 50px;
   }
   
   .search-row {
@@ -708,11 +680,6 @@ export default {
     flex: 1;
     text-align: center;
     min-width: 120px;
-  }
-  
-  .section-titles {
-    flex-direction: column;
-    gap: 10px;
   }
   
   .content-header {
