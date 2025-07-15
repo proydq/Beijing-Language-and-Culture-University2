@@ -1,282 +1,392 @@
 <template>
-  <div class="position-management">
-    <!-- 顶部导航栏 -->
-    <div class="header">
-      <div class="header-left">
-        <div class="logo">
-          <el-icon size="24"><home-filled /></el-icon>
+  <Layout>
+    <div class="position-management">
+      <div class="main-container">
+        <!-- 左侧导航 -->
+        <div class="sidebar">
+          <div class="nav-item" 
+               :class="{ active: activeTab === 'positionList' }"
+               @click="activeTab = 'positionList'">
+            职务管理
+          </div>
         </div>
-        <span class="title">功能模块</span>
-      </div>
-      <div class="header-right">
-        <div class="avatar">
-          <el-icon size="20"><user /></el-icon>
-        </div>
-        <span class="username">系统管理员</span>
-        <el-dropdown>
-          <span class="dropdown-link">
-            <el-icon><grid /></el-icon>
-          </span>
-        </el-dropdown>
-      </div>
-    </div>
 
-    <div class="main-container">
-      <!-- 左侧导航 -->
-      <div class="sidebar">
-        <div class="nav-item active">
-          <span>职务管理</span>
-        </div>
-        <div class="nav-item" @click="goToLevel">
-          <span>职级管理</span>
+        <!-- 右侧内容区域 -->
+        <div class="main-content">
+          <!-- 标签页 -->
+          <div class="tabs">
+            <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+              <el-tab-pane label="职务列表" name="positionList">
+                <!-- 搜索区域 -->
+                <div class="search-area">
+                  <el-form :model="searchForm" label-width="80px" :inline="true">
+                    <el-row :gutter="20">
+                      <el-col :span="8">
+                        <el-form-item label="职务名称">
+                          <el-input v-model="searchForm.positionName" placeholder="请输入职务名称" clearable />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="8">
+                        <el-form-item label="创建者">
+                          <el-input v-model="searchForm.creator" placeholder="请输入创建者" clearable />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="8">
+                        <el-form-item label="状态">
+                          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
+                            <el-option label="启用" value="1" />
+                            <el-option label="禁用" value="0" />
+                          </el-select>
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="24">
+                        <div class="search-buttons">
+                          <el-button type="primary" @click="handleSearch">查询</el-button>
+                          <el-button @click="handleReset">重置</el-button>
+                        </div>
+                      </el-col>
+                    </el-row>
+                  </el-form>
+                </div>
+
+                <!-- 操作按钮区域 -->
+                <div class="action-area">
+                  <div class="left-actions">
+                    <span class="title">职务列表</span>
+                  </div>
+                  <div class="right-actions">
+                    <el-button type="primary" @click="handleSync">手动同步</el-button>
+                    <el-button type="primary" @click="handleImport">导入</el-button>
+                    <el-button type="primary" @click="handleAdd">新增</el-button>
+                    <el-button type="warning" @click="handleExport">导出</el-button>
+                  </div>
+                </div>
+
+                <!-- 数据表格 -->
+                <div class="table-area">
+                  <el-table :data="tableData" style="width: 100%" stripe>
+                    <el-table-column prop="id" label="序号" width="80" />
+                    <el-table-column prop="positionName" label="职务名称" />
+                    <el-table-column prop="positionDesc" label="职务描述" />
+                    <el-table-column prop="level" label="职务等级" />
+                    <el-table-column prop="department" label="所属部门" />
+                    <el-table-column prop="creator" label="创建执行者" />
+                    <el-table-column prop="createTime" label="创建时间" />
+                    <el-table-column prop="status" label="状态" width="100">
+                      <template #default="scope">
+                        <el-tag :type="scope.row.status === '1' ? 'success' : 'danger'">
+                          {{ scope.row.status === '1' ? '启用' : '禁用' }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="200" fixed="right">
+                      <template #default="scope">
+                        <el-button type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
+                        <el-button type="warning" size="small" @click="handleToggleStatus(scope.row)">
+                          {{ scope.row.status === '1' ? '禁用' : '启用' }}
+                        </el-button>
+                        <el-button type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+
+                <!-- 分页 -->
+                <div class="pagination-area">
+                  <el-pagination
+                    v-model:current-page="currentPage"
+                    v-model:page-size="pageSize"
+                    :page-sizes="[10, 20, 50, 100]"
+                    :total="total"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                  />
+                </div>
+              </el-tab-pane>
+            </el-tabs>
+          </div>
         </div>
       </div>
 
-      <!-- 右侧主内容 -->
-      <div class="main-content">
-        <!-- 标签页 -->
-        <el-tabs v-model="activeTab" class="tabs">
-          <el-tab-pane label="用户管理" name="user"></el-tab-pane>
-          <el-tab-pane label="组织架构管理" name="org"></el-tab-pane>
-          <el-tab-pane label="职务/职级管理" name="position" class="active"></el-tab-pane>
-        </el-tabs>
-
-        <!-- 搜索区域 -->
-        <div class="search-area">
-          <el-row :gutter="20" align="middle">
-            <el-col :span="6">
-              <el-form-item label="职务名称:" label-width="80px">
-                <el-input v-model="searchForm.positionName" placeholder="请输入职务名称" />
+      <!-- 职务编辑对话框 -->
+      <el-dialog
+        v-model="dialogVisible"
+        :title="dialogTitle"
+        width="600px"
+        @close="handleDialogClose"
+      >
+        <el-form
+          ref="positionFormRef"
+          :model="positionForm"
+          :rules="positionFormRules"
+          label-width="100px"
+        >
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="职务名称" prop="positionName">
+                <el-input v-model="positionForm.positionName" placeholder="请输入职务名称" />
               </el-form-item>
             </el-col>
-            <el-col :span="4">
-              <div class="search-buttons">
-                <el-button type="primary" @click="handleSearch">搜索</el-button>
-                <el-button @click="handleReset">重置</el-button>
-              </div>
+            <el-col :span="12">
+              <el-form-item label="职务等级" prop="level">
+                <el-select v-model="positionForm.level" placeholder="请选择职务等级">
+                  <el-option label="初级" value="1" />
+                  <el-option label="中级" value="2" />
+                  <el-option label="高级" value="3" />
+                  <el-option label="专家级" value="4" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="所属部门" prop="department">
+                <el-select v-model="positionForm.department" placeholder="请选择部门">
+                  <el-option label="研发部" value="研发部" />
+                  <el-option label="人事部" value="人事部" />
+                  <el-option label="行政部" value="行政部" />
+                  <el-option label="销售部" value="销售部" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="状态" prop="status">
+                <el-select v-model="positionForm.status" placeholder="请选择状态">
+                  <el-option label="启用" value="1" />
+                  <el-option label="禁用" value="0" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="24">
+              <el-form-item label="职务描述" prop="positionDesc">
+                <el-input 
+                  v-model="positionForm.positionDesc" 
+                  type="textarea" 
+                  :rows="3"
+                  placeholder="请输入职务描述" 
+                />
+              </el-form-item>
             </el-col>
           </el-row>
-        </div>
-
-        <!-- 操作按钮区域 -->
-        <div class="action-area">
-          <div class="left-actions">
-            <span class="title">职务列表</span>
+        </el-form>
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="dialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="handleSubmit">确定</el-button>
           </div>
-          <div class="right-actions">
-            <el-button type="primary" @click="handleSync">手动同步</el-button>
-            <el-button type="primary" @click="handleImport">导入</el-button>
-            <el-button type="primary" @click="handleAdd">新增</el-button>
-            <el-button type="warning" @click="handleExport">导出</el-button>
-          </div>
-        </div>
-
-        <!-- 数据表格 -->
-        <div class="table-area">
-          <el-table :data="tableData" style="width: 100%" stripe>
-            <el-table-column prop="id" label="序号" width="80" />
-            <el-table-column prop="positionName" label="职务名称" />
-            <el-table-column prop="positionDesc" label="职务描述" />
-            <el-table-column prop="creator" label="创建执行者" />
-            <el-table-column prop="createTime" label="创建时间" />
-            <el-table-column label="操作" width="150" fixed="right">
-              <template #default="scope">
-                <el-button type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
-                <el-button type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-
-        <!-- 分页 -->
-        <div class="pagination-area">
-          <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="total"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
-        </div>
-      </div>
+        </template>
+      </el-dialog>
     </div>
-
-    <!-- 职务编辑弹窗 -->
-    <PositionEditDialog
-      v-model:visible="dialogVisible"
-      :position-data="currentPositionData"
-      :is-edit="isEdit"
-      @submit="handlePositionSubmit"
-    />
-  </div>
+  </Layout>
 </template>
 
 <script>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import PositionEditDialog from '../components/PositionEditDialog.vue'
+import { ref, reactive, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import Layout from '@/components/Layout.vue'
 
 export default {
   name: 'PositionManagement',
   components: {
-    PositionEditDialog
+    Layout
   },
   setup() {
-    const router = useRouter()
-    const activeTab = ref('position')
+    // 响应式数据
+    const activeTab = ref('positionList')
+    const dialogVisible = ref(false)
+    const editMode = ref(false)
     const currentPage = ref(1)
     const pageSize = ref(10)
     const total = ref(50)
 
-    // 编辑弹窗相关
-    const dialogVisible = ref(false)
-    const isEdit = ref(false)
-    const currentPositionData = ref({})
-
+    // 搜索表单
     const searchForm = reactive({
-      positionName: ''
+      positionName: '',
+      creator: '',
+      status: ''
     })
 
+    // 职务表单
+    const positionForm = reactive({
+      id: null,
+      positionName: '',
+      positionDesc: '',
+      level: '',
+      department: '',
+      status: '1'
+    })
+
+    // 表单验证规则
+    const positionFormRules = {
+      positionName: [
+        { required: true, message: '请输入职务名称', trigger: 'blur' }
+      ],
+      level: [
+        { required: true, message: '请选择职务等级', trigger: 'change' }
+      ],
+      department: [
+        { required: true, message: '请选择所属部门', trigger: 'change' }
+      ]
+    }
+
+    // 表格数据
     const tableData = ref([
       {
         id: 1,
-        positionName: '产品经理',
-        positionDesc: '负责产品设计',
-        creator: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
+        positionName: '软件工程师',
+        positionDesc: '负责软件开发和维护工作',
+        level: '中级',
+        department: '研发部',
+        creator: '管理员',
+        createTime: '2024-01-01 10:00:00',
+        status: '1'
       },
       {
         id: 2,
-        positionName: 'java开发工程师',
-        positionDesc: '负责java开发',
-        creator: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
+        positionName: '产品经理',
+        positionDesc: '负责产品规划和设计工作',
+        level: '高级',
+        department: '产品部',
+        creator: '管理员',
+        createTime: '2024-01-02 10:00:00',
+        status: '1'
       },
       {
         id: 3,
-        positionName: 'WEB前端开发工程师',
-        positionDesc: '负责前端开发',
-        creator: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
-      },
-      {
-        id: 4,
-        positionName: 'UI设计师',
-        positionDesc: '负责界面设计',
-        creator: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
-      },
-      {
-        id: 5,
-        positionName: '测试',
-        positionDesc: '负责项目测试',
-        creator: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
+        positionName: '人事专员',
+        positionDesc: '负责人力资源管理工作',
+        level: '初级',
+        department: '人事部',
+        creator: '管理员',
+        createTime: '2024-01-03 10:00:00',
+        status: '0'
       }
     ])
 
-    const goToLevel = () => {
-      router.push('/level-management')
+    // 计算属性
+    const dialogTitle = computed(() => {
+      return editMode.value ? '编辑职务' : '新增职务'
+    })
+
+    // 方法
+    const handleTabClick = (tab) => {
+      console.log('切换标签页:', tab.name)
     }
 
     const handleSearch = () => {
-      console.log('搜索:', searchForm)
-      // 这里实现搜索逻辑
+      console.log('搜索职务:', searchForm)
     }
 
     const handleReset = () => {
-      searchForm.positionName = ''
+      Object.assign(searchForm, {
+        positionName: '',
+        creator: '',
+        status: ''
+      })
     }
 
     const handleSync = () => {
-      console.log('手动同步')
+      ElMessage.success('同步成功')
     }
 
     const handleImport = () => {
-      console.log('导入')
-    }
-
-    const handleAdd = () => {
-      isEdit.value = false
-      currentPositionData.value = {}
-      dialogVisible.value = true
+      console.log('导入职务')
     }
 
     const handleExport = () => {
-      console.log('导出')
+      console.log('导出职务')
+    }
+
+    const handleAdd = () => {
+      editMode.value = false
+      resetPositionForm()
+      dialogVisible.value = true
     }
 
     const handleEdit = (row) => {
-      isEdit.value = true
-      currentPositionData.value = { ...row }
+      editMode.value = true
+      Object.assign(positionForm, row)
       dialogVisible.value = true
     }
 
     const handleDelete = (row) => {
-      console.log('删除:', row)
-      // 这里可以添加确认删除的逻辑
+      ElMessageBox.confirm(`确认删除职务"${row.positionName}"吗？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        ElMessage.success('删除成功')
+      })
     }
 
-    const handleSizeChange = (size) => {
-      pageSize.value = size
+    const handleToggleStatus = (row) => {
+      const action = row.status === '1' ? '禁用' : '启用'
+      ElMessageBox.confirm(`确认${action}职务"${row.positionName}"吗？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        row.status = row.status === '1' ? '0' : '1'
+        ElMessage.success(`${action}成功`)
+      })
     }
 
-    const handleCurrentChange = (page) => {
-      currentPage.value = page
+    const handleSubmit = () => {
+      console.log('提交职务表单:', positionForm)
+      dialogVisible.value = false
+      ElMessage.success(editMode.value ? '编辑成功' : '新增成功')
     }
 
-    const handlePositionSubmit = (positionData) => {
-      if (isEdit.value) {
-        // 编辑职务 - 更新表格数据
-        const index = tableData.value.findIndex(item => item.id === currentPositionData.value.id)
-        if (index !== -1) {
-          tableData.value[index] = { 
-            ...positionData, 
-            id: currentPositionData.value.id,
-            creator: currentPositionData.value.creator,
-            createTime: currentPositionData.value.createTime
-          }
-        }
-        console.log('更新职务:', positionData)
-      } else {
-        // 新增职务 - 添加到表格数据
-        const newPosition = {
-          ...positionData,
-          id: tableData.value.length + 1,
-          creator: 'liuyashen',
-          createTime: new Date().toISOString().split('T')[0].replace(/-/g, '.') + ' ' + 
-                     new Date().toTimeString().split(' ')[0]
-        }
-        tableData.value.unshift(newPosition)
-        total.value += 1
-        console.log('新增职务:', positionData)
-      }
+    const handleDialogClose = () => {
+      resetPositionForm()
+    }
+
+    const resetPositionForm = () => {
+      Object.assign(positionForm, {
+        id: null,
+        positionName: '',
+        positionDesc: '',
+        level: '',
+        department: '',
+        status: '1'
+      })
+    }
+
+    const handleSizeChange = (val) => {
+      pageSize.value = val
+      console.log('每页条数变化:', val)
+    }
+
+    const handleCurrentChange = (val) => {
+      currentPage.value = val
+      console.log('当前页变化:', val)
     }
 
     return {
       activeTab,
-      searchForm,
-      tableData,
+      dialogVisible,
+      editMode,
       currentPage,
       pageSize,
       total,
-      dialogVisible,
-      isEdit,
-      currentPositionData,
-      goToLevel,
+      searchForm,
+      positionForm,
+      positionFormRules,
+      tableData,
+      dialogTitle,
+      handleTabClick,
       handleSearch,
       handleReset,
       handleSync,
       handleImport,
-      handleAdd,
       handleExport,
+      handleAdd,
       handleEdit,
       handleDelete,
+      handleToggleStatus,
+      handleSubmit,
+      handleDialogClose,
       handleSizeChange,
-      handleCurrentChange,
-      handlePositionSubmit
+      handleCurrentChange
     }
   }
 }
@@ -284,78 +394,13 @@ export default {
 
 <style scoped>
 .position-management {
-  min-height: 100vh;
   background-color: #f5f5f5;
-}
-
-.header {
-  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
-  color: white;
-  padding: 15px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: white;
-  color: #4A90E2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.title {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.avatar {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.username {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.dropdown-link {
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: background-color 0.3s;
-}
-
-.dropdown-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  min-height: calc(100vh - 110px);
 }
 
 .main-container {
   display: flex;
-  height: calc(100vh - 70px);
+  height: calc(100vh - 110px);
 }
 
 .sidebar {

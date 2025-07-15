@@ -1,276 +1,448 @@
 <template>
-  <div class="level-management">
-    <!-- 顶部导航栏 -->
-    <div class="header">
-      <div class="header-left">
-        <div class="logo">
-          <el-icon size="24"><home-filled /></el-icon>
+  <Layout>
+    <div class="level-management">
+      <div class="main-container">
+        <!-- 左侧导航 -->
+        <div class="sidebar">
+          <div class="nav-item" 
+               :class="{ active: activeTab === 'levelList' }"
+               @click="activeTab = 'levelList'">
+            等级管理
+          </div>
         </div>
-        <span class="title">功能模块</span>
-      </div>
-      <div class="header-right">
-        <div class="avatar">
-          <el-icon size="20"><user /></el-icon>
-        </div>
-        <span class="username">系统管理员</span>
-        <el-dropdown>
-          <span class="dropdown-link">
-            <el-icon><grid /></el-icon>
-          </span>
-        </el-dropdown>
-      </div>
-    </div>
 
-    <div class="main-container">
-      <!-- 左侧导航 -->
-      <div class="sidebar">
-        <div class="nav-item" @click="goToPosition">
-          <span>职务管理</span>
-        </div>
-        <div class="nav-item active">
-          <span>职级管理</span>
+        <!-- 右侧内容区域 -->
+        <div class="main-content">
+          <!-- 标签页 -->
+          <div class="tabs">
+            <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+              <el-tab-pane label="等级列表" name="levelList">
+                <!-- 搜索区域 -->
+                <div class="search-area">
+                  <el-form :model="searchForm" label-width="80px" :inline="true">
+                    <el-row :gutter="20">
+                      <el-col :span="8">
+                        <el-form-item label="等级名称">
+                          <el-input v-model="searchForm.levelName" placeholder="请输入等级名称" clearable />
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="8">
+                        <el-form-item label="等级类型">
+                          <el-select v-model="searchForm.levelType" placeholder="请选择等级类型" clearable>
+                            <el-option label="职务等级" value="position" />
+                            <el-option label="技能等级" value="skill" />
+                            <el-option label="管理等级" value="management" />
+                          </el-select>
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="8">
+                        <el-form-item label="状态">
+                          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
+                            <el-option label="启用" value="1" />
+                            <el-option label="禁用" value="0" />
+                          </el-select>
+                        </el-form-item>
+                      </el-col>
+                      <el-col :span="24">
+                        <div class="search-buttons">
+                          <el-button type="primary" @click="handleSearch">查询</el-button>
+                          <el-button @click="handleReset">重置</el-button>
+                        </div>
+                      </el-col>
+                    </el-row>
+                  </el-form>
+                </div>
+
+                <!-- 操作按钮区域 -->
+                <div class="action-area">
+                  <div class="left-actions">
+                    <span class="title">等级列表</span>
+                  </div>
+                  <div class="right-actions">
+                    <el-button type="primary" @click="handleAdd">新增</el-button>
+                    <el-button type="success" @click="handleImport">导入</el-button>
+                    <el-button type="warning" @click="handleExport">导出</el-button>
+                  </div>
+                </div>
+
+                <!-- 数据表格 -->
+                <div class="table-area">
+                  <el-table :data="tableData" style="width: 100%" stripe>
+                    <el-table-column prop="id" label="序号" width="80" />
+                    <el-table-column prop="levelName" label="等级名称" />
+                    <el-table-column prop="levelCode" label="等级编码" />
+                    <el-table-column prop="levelType" label="等级类型">
+                      <template #default="scope">
+                        <el-tag v-if="scope.row.levelType === 'position'" type="primary">职务等级</el-tag>
+                        <el-tag v-else-if="scope.row.levelType === 'skill'" type="success">技能等级</el-tag>
+                        <el-tag v-else type="warning">管理等级</el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="levelValue" label="等级数值" />
+                    <el-table-column prop="description" label="等级描述" />
+                    <el-table-column prop="creator" label="创建者" />
+                    <el-table-column prop="createTime" label="创建时间" />
+                    <el-table-column prop="status" label="状态" width="100">
+                      <template #default="scope">
+                        <el-tag :type="scope.row.status === '1' ? 'success' : 'danger'">
+                          {{ scope.row.status === '1' ? '启用' : '禁用' }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="200" fixed="right">
+                      <template #default="scope">
+                        <el-button type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
+                        <el-button type="warning" size="small" @click="handleToggleStatus(scope.row)">
+                          {{ scope.row.status === '1' ? '禁用' : '启用' }}
+                        </el-button>
+                        <el-button type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+
+                <!-- 分页 -->
+                <div class="pagination-area">
+                  <el-pagination
+                    v-model:current-page="currentPage"
+                    v-model:page-size="pageSize"
+                    :page-sizes="[10, 20, 50, 100]"
+                    :total="total"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                  />
+                </div>
+              </el-tab-pane>
+            </el-tabs>
+          </div>
         </div>
       </div>
 
-      <!-- 右侧主内容 -->
-      <div class="main-content">
-        <!-- 标签页 -->
-        <el-tabs v-model="activeTab" class="tabs">
-          <el-tab-pane label="用户管理" name="user"></el-tab-pane>
-          <el-tab-pane label="组织架构管理" name="org"></el-tab-pane>
-          <el-tab-pane label="职务/职级管理" name="position" class="active"></el-tab-pane>
-        </el-tabs>
-
-        <!-- 搜索区域 -->
-        <div class="search-area">
-          <el-row :gutter="20" align="middle">
-            <el-col :span="6">
-              <el-form-item label="职级名称:" label-width="80px">
-                <el-input v-model="searchForm.levelName" placeholder="请输入职级名称" />
+      <!-- 等级编辑对话框 -->
+      <el-dialog
+        v-model="dialogVisible"
+        :title="dialogTitle"
+        width="600px"
+        @close="handleDialogClose"
+      >
+        <el-form
+          ref="levelFormRef"
+          :model="levelForm"
+          :rules="levelFormRules"
+          label-width="100px"
+        >
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="等级名称" prop="levelName">
+                <el-input v-model="levelForm.levelName" placeholder="请输入等级名称" />
               </el-form-item>
             </el-col>
-            <el-col :span="4">
-              <div class="search-buttons">
-                <el-button type="primary" @click="handleSearch">搜索</el-button>
-                <el-button @click="handleReset">重置</el-button>
-              </div>
+            <el-col :span="12">
+              <el-form-item label="等级编码" prop="levelCode">
+                <el-input v-model="levelForm.levelCode" placeholder="请输入等级编码" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="等级类型" prop="levelType">
+                <el-select v-model="levelForm.levelType" placeholder="请选择等级类型">
+                  <el-option label="职务等级" value="position" />
+                  <el-option label="技能等级" value="skill" />
+                  <el-option label="管理等级" value="management" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="等级数值" prop="levelValue">
+                <el-input-number 
+                  v-model="levelForm.levelValue" 
+                  :min="1" 
+                  :max="100" 
+                  placeholder="请输入等级数值" 
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="权重" prop="weight">
+                <el-input-number 
+                  v-model="levelForm.weight" 
+                  :min="0" 
+                  :max="100" 
+                  placeholder="请输入权重" 
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="状态" prop="status">
+                <el-select v-model="levelForm.status" placeholder="请选择状态">
+                  <el-option label="启用" value="1" />
+                  <el-option label="禁用" value="0" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="24">
+              <el-form-item label="等级描述" prop="description">
+                <el-input 
+                  v-model="levelForm.description" 
+                  type="textarea" 
+                  :rows="3"
+                  placeholder="请输入等级描述" 
+                />
+              </el-form-item>
             </el-col>
           </el-row>
-        </div>
-
-        <!-- 操作按钮区域 -->
-        <div class="action-area">
-          <div class="left-actions">
-            <span class="title">职级列表</span>
+        </el-form>
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="dialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="handleSubmit">确定</el-button>
           </div>
-          <div class="right-actions">
-            <el-button type="primary" @click="handleSync">手动同步</el-button>
-            <el-button type="primary" @click="handleImport">导入</el-button>
-            <el-button type="primary" @click="handleAdd">新增</el-button>
-            <el-button type="warning" @click="handleExport">导出</el-button>
-          </div>
-        </div>
-
-        <!-- 数据表格 -->
-        <div class="table-area">
-          <el-table :data="tableData" style="width: 100%" stripe>
-            <el-table-column prop="id" label="序号" width="80" />
-            <el-table-column prop="levelName" label="职级名称" />
-            <el-table-column prop="creator" label="创建执行者" />
-            <el-table-column prop="createTime" label="创建时间" />
-            <el-table-column label="操作" width="150" fixed="right">
-              <template #default="scope">
-                <el-button type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
-                <el-button type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-
-        <!-- 分页 -->
-        <div class="pagination-area">
-          <el-pagination
-            v-model:current-page="currentPage"
-            v-model:page-size="pageSize"
-            :page-sizes="[10, 20, 50, 100]"
-            :total="total"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
-        </div>
-      </div>
+        </template>
+      </el-dialog>
     </div>
-
-    <!-- 职级编辑弹窗 -->
-    <LevelEditDialog
-      v-model:visible="dialogVisible"
-      :level-data="currentLevelData"
-      :is-edit="isEdit"
-      @submit="handleLevelSubmit"
-    />
-  </div>
+  </Layout>
 </template>
 
 <script>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import LevelEditDialog from '../components/LevelEditDialog.vue'
+import { ref, reactive, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import Layout from '@/components/Layout.vue'
 
 export default {
   name: 'LevelManagement',
   components: {
-    LevelEditDialog
+    Layout
   },
   setup() {
-    const router = useRouter()
-    const activeTab = ref('position')
+    // 响应式数据
+    const activeTab = ref('levelList')
+    const dialogVisible = ref(false)
+    const editMode = ref(false)
     const currentPage = ref(1)
     const pageSize = ref(10)
-    const total = ref(50)
+    const total = ref(30)
 
-    // 编辑弹窗相关
-    const dialogVisible = ref(false)
-    const isEdit = ref(false)
-    const currentLevelData = ref({})
-
+    // 搜索表单
     const searchForm = reactive({
-      levelName: ''
+      levelName: '',
+      levelType: '',
+      status: ''
     })
 
+    // 等级表单
+    const levelForm = reactive({
+      id: null,
+      levelName: '',
+      levelCode: '',
+      levelType: '',
+      levelValue: null,
+      weight: null,
+      description: '',
+      status: '1'
+    })
+
+    // 表单验证规则
+    const levelFormRules = {
+      levelName: [
+        { required: true, message: '请输入等级名称', trigger: 'blur' }
+      ],
+      levelCode: [
+        { required: true, message: '请输入等级编码', trigger: 'blur' }
+      ],
+      levelType: [
+        { required: true, message: '请选择等级类型', trigger: 'change' }
+      ],
+      levelValue: [
+        { required: true, message: '请输入等级数值', trigger: 'change' }
+      ]
+    }
+
+    // 表格数据
     const tableData = ref([
       {
         id: 1,
-        levelName: '实习职级名称',
-        creator: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
+        levelName: '初级工程师',
+        levelCode: 'L1',
+        levelType: 'position',
+        levelValue: 1,
+        weight: 10,
+        description: '初级技术人员',
+        creator: '管理员',
+        createTime: '2024-01-01 10:00:00',
+        status: '1'
       },
       {
         id: 2,
-        levelName: '实习职级名称',
-        creator: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
+        levelName: '中级工程师',
+        levelCode: 'L2',
+        levelType: 'position',
+        levelValue: 2,
+        weight: 20,
+        description: '中级技术人员',
+        creator: '管理员',
+        createTime: '2024-01-02 10:00:00',
+        status: '1'
       },
       {
         id: 3,
-        levelName: '实习职级名称',
-        creator: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
+        levelName: '高级工程师',
+        levelCode: 'L3',
+        levelType: 'position',
+        levelValue: 3,
+        weight: 30,
+        description: '高级技术人员',
+        creator: '管理员',
+        createTime: '2024-01-03 10:00:00',
+        status: '1'
       },
       {
         id: 4,
-        levelName: '实习职级名称',
-        creator: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
+        levelName: '技术专家',
+        levelCode: 'L4',
+        levelType: 'skill',
+        levelValue: 4,
+        weight: 40,
+        description: '技术专家级别',
+        creator: '管理员',
+        createTime: '2024-01-04 10:00:00',
+        status: '1'
       },
       {
         id: 5,
-        levelName: '实习职级名称',
-        creator: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
+        levelName: '项目经理',
+        levelCode: 'M1',
+        levelType: 'management',
+        levelValue: 1,
+        weight: 25,
+        description: '项目管理层级',
+        creator: '管理员',
+        createTime: '2024-01-05 10:00:00',
+        status: '0'
       }
     ])
 
-    const goToPosition = () => {
-      router.push('/position-management')
+    // 计算属性
+    const dialogTitle = computed(() => {
+      return editMode.value ? '编辑等级' : '新增等级'
+    })
+
+    // 方法
+    const handleTabClick = (tab) => {
+      console.log('切换标签页:', tab.name)
     }
 
     const handleSearch = () => {
-      console.log('搜索:', searchForm)
-      // 这里实现搜索逻辑
+      console.log('搜索等级:', searchForm)
     }
 
     const handleReset = () => {
-      searchForm.levelName = ''
-    }
-
-    const handleSync = () => {
-      console.log('手动同步')
+      Object.assign(searchForm, {
+        levelName: '',
+        levelType: '',
+        status: ''
+      })
     }
 
     const handleImport = () => {
-      console.log('导入')
-    }
-
-    const handleAdd = () => {
-      isEdit.value = false
-      currentLevelData.value = {}
-      dialogVisible.value = true
+      console.log('导入等级')
     }
 
     const handleExport = () => {
-      console.log('导出')
+      console.log('导出等级')
+    }
+
+    const handleAdd = () => {
+      editMode.value = false
+      resetLevelForm()
+      dialogVisible.value = true
     }
 
     const handleEdit = (row) => {
-      isEdit.value = true
-      currentLevelData.value = { ...row }
+      editMode.value = true
+      Object.assign(levelForm, row)
       dialogVisible.value = true
     }
 
     const handleDelete = (row) => {
-      console.log('删除:', row)
-      // 这里可以添加确认删除的逻辑
+      ElMessageBox.confirm(`确认删除等级"${row.levelName}"吗？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        ElMessage.success('删除成功')
+      })
     }
 
-    const handleSizeChange = (size) => {
-      pageSize.value = size
+    const handleToggleStatus = (row) => {
+      const action = row.status === '1' ? '禁用' : '启用'
+      ElMessageBox.confirm(`确认${action}等级"${row.levelName}"吗？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        row.status = row.status === '1' ? '0' : '1'
+        ElMessage.success(`${action}成功`)
+      })
     }
 
-    const handleCurrentChange = (page) => {
-      currentPage.value = page
+    const handleSubmit = () => {
+      console.log('提交等级表单:', levelForm)
+      dialogVisible.value = false
+      ElMessage.success(editMode.value ? '编辑成功' : '新增成功')
     }
 
-    const handleLevelSubmit = (levelData) => {
-      if (isEdit.value) {
-        // 编辑职级 - 更新表格数据
-        const index = tableData.value.findIndex(item => item.id === currentLevelData.value.id)
-        if (index !== -1) {
-          tableData.value[index] = { 
-            ...levelData, 
-            id: currentLevelData.value.id,
-            creator: currentLevelData.value.creator,
-            createTime: currentLevelData.value.createTime
-          }
-        }
-        console.log('更新职级:', levelData)
-      } else {
-        // 新增职级 - 添加到表格数据
-        const newLevel = {
-          ...levelData,
-          id: tableData.value.length + 1,
-          creator: 'liuyashen',
-          createTime: new Date().toISOString().split('T')[0].replace(/-/g, '.') + ' ' + 
-                     new Date().toTimeString().split(' ')[0]
-        }
-        tableData.value.unshift(newLevel)
-        total.value += 1
-        console.log('新增职级:', levelData)
-      }
+    const handleDialogClose = () => {
+      resetLevelForm()
+    }
+
+    const resetLevelForm = () => {
+      Object.assign(levelForm, {
+        id: null,
+        levelName: '',
+        levelCode: '',
+        levelType: '',
+        levelValue: null,
+        weight: null,
+        description: '',
+        status: '1'
+      })
+    }
+
+    const handleSizeChange = (val) => {
+      pageSize.value = val
+      console.log('每页条数变化:', val)
+    }
+
+    const handleCurrentChange = (val) => {
+      currentPage.value = val
+      console.log('当前页变化:', val)
     }
 
     return {
       activeTab,
-      searchForm,
-      tableData,
+      dialogVisible,
+      editMode,
       currentPage,
       pageSize,
       total,
-      dialogVisible,
-      isEdit,
-      currentLevelData,
-      goToPosition,
+      searchForm,
+      levelForm,
+      levelFormRules,
+      tableData,
+      dialogTitle,
+      handleTabClick,
       handleSearch,
       handleReset,
-      handleSync,
       handleImport,
-      handleAdd,
       handleExport,
+      handleAdd,
       handleEdit,
       handleDelete,
+      handleToggleStatus,
+      handleSubmit,
+      handleDialogClose,
       handleSizeChange,
-      handleCurrentChange,
-      handleLevelSubmit
+      handleCurrentChange
     }
   }
 }
@@ -278,78 +450,13 @@ export default {
 
 <style scoped>
 .level-management {
-  min-height: 100vh;
   background-color: #f5f5f5;
-}
-
-.header {
-  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
-  color: white;
-  padding: 15px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: white;
-  color: #4A90E2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.title {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.avatar {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.username {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.dropdown-link {
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: background-color 0.3s;
-}
-
-.dropdown-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  min-height: calc(100vh - 110px);
 }
 
 .main-container {
   display: flex;
-  height: calc(100vh - 70px);
+  height: calc(100vh - 110px);
 }
 
 .sidebar {
@@ -467,6 +574,10 @@ export default {
 
 :deep(.el-table .cell) {
   padding: 0 8px;
+}
+
+:deep(.el-input-number) {
+  width: 100%;
 }
 
 /* 响应式调整 */
