@@ -82,13 +82,13 @@
             </div>
           </div>
           <!-- 新增房屋(教室)借用模块 -->
-          <div class="function-card" @click="handleCardClick('房屋(教室)借用')">
+          <div class="function-card" @click="handleCardClick('房屋借用管理')">
             <div class="card-icon">
-              <el-icon size="24"><office-building /></el-icon>
+              <el-icon size="24"><school /></el-icon>
             </div>
             <div class="card-content">
-              <h4>房屋(教室)借用</h4>
-              <p>主要用于房屋（教室）安排问的信息管理</p>
+              <h4>房屋借用管理</h4>
+              <p>主要用于房屋（教室）的借用申请、审批和统计管理</p>
             </div>
           </div>
         </div>
@@ -430,10 +430,8 @@ export default {
         case '权限管理':
           router.push('/role-management')
           break
-        case '房屋(教室)借用':
-          // 暂时输出到控制台，等待后续开发
-          console.log('点击了房屋(教室)借用')
-          // router.push('/room-booking')  // 后续添加路由
+        case '房屋借用管理':
+          router.push('/room-booking')
           break
         // 可以添加更多卡片的跳转逻辑
         default:

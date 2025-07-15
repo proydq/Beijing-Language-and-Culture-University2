@@ -1,5 +1,3 @@
-// 在 src/router/index.js 文件中添加以下内容
-
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
 import UserManagement from '../views/UserManagement.vue'
@@ -10,7 +8,7 @@ import HouseManagement from '../views/HouseManagement.vue'
 import PersonalCenter from '../views/PersonalCenter.vue'
 import RoleManagement from '../views/RoleManagement.vue'
 import AdminManagement from '../views/AdminManagement.vue'
-import AccessControlRecords from '../views/AccessControlRecords.vue' // 新增
+import RoomBooking from '../views/RoomBooking.vue'  // 新增这一行
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -65,26 +63,17 @@ const router = createRouter({
       name: 'AdminManagement',
       component: AdminManagement
     },
-    // 新增门禁管理路由
     {
-      path: '/access-control-records',
-      name: 'AccessControlRecords',
-      component: AccessControlRecords
-    },
-    // 门禁管理相关路由
-    {
-      path: '/access-control/dashboard',
-      name: 'AccessControlDashboard',
-      component: AccessControlRecords
-    },
-    {
-      path: '/access-control/records',
-      name: 'AccessControlRecords2',
-      component: AccessControlRecords
+      path: '/room-booking',  // 新增这个路由配置
+      name: 'RoomBooking',
+      component: RoomBooking
     },
     {
       path: '/about',
       name: 'about',
+      // route level code-splitting
+      // this generates a separate chunk (About.[hash].js) for this route
+      // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue')
     }
   ]
