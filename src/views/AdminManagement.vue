@@ -24,11 +24,6 @@
     <div class="main-container">
       <!-- 左侧导航 -->
       <div class="sidebar">
-        <!-- 添加首页导航 -->
-        <div class="nav-item" @click="goToHome">
-          <el-icon><home /></el-icon>
-          <span>首页</span>
-        </div>
         <div class="nav-item" @click="goToRoleManagement">
           <span>角色管理</span>
         </div>
