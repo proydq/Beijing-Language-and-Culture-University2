@@ -169,129 +169,8 @@
             </el-tab-pane>
 
             <el-tab-pane label="职务职称管理" name="positionManagement">
-              <!-- 职务管理区域 -->
-              <div class="position-management">
-                <!-- 职务管理部分 -->
-                <div class="position-section">
-                  <div class="section-header">
-                    <h4>职务管理</h4>
-                  </div>
-                  
-                  <!-- 职务搜索区域 -->
-                  <div class="search-area">
-                    <el-form :model="positionSearchForm" :inline="true" class="search-form">
-                      <el-form-item label="职务名称:">
-                        <el-input v-model="positionSearchForm.positionName" placeholder="请输入搜索信息" clearable />
-                      </el-form-item>
-                      <el-form-item>
-                        <el-button type="primary" @click="handlePositionSearch">搜索</el-button>
-                        <el-button @click="handlePositionReset">重置</el-button>
-                      </el-form-item>
-                    </el-form>
-                  </div>
-
-                  <!-- 职务列表标题和操作按钮 -->
-                  <div class="list-header">
-                    <h3>职务列表</h3>
-                    <div class="header-actions">
-                      <el-button type="primary" @click="handlePositionSync">手动同步</el-button>
-                      <el-button type="primary" @click="handlePositionImport">导入</el-button>
-                      <el-button type="success" @click="handlePositionAdd">新增</el-button>
-                      <el-button type="warning" @click="handlePositionExport">导出</el-button>
-                    </div>
-                  </div>
-
-                  <!-- 职务表格 -->
-                  <div class="table-container">
-                    <el-table :data="positionTableData" style="width: 100%" stripe table-layout="auto">
-                      <el-table-column prop="id" label="序号" width="80" align="center" />
-                      <el-table-column prop="positionName" label="职务名称" min-width="200" align="center" />
-                      <el-table-column prop="description" label="职务描述" min-width="300" align="center" />
-                      <el-table-column prop="createUser" label="创建账号" min-width="150" align="center" />
-                      <el-table-column prop="createTime" label="创建时间" min-width="180" align="center" />
-                      <el-table-column label="操作" width="200" align="center" fixed="right">
-                        <template #default="scope">
-                          <el-button type="primary" size="small" @click="handlePositionEdit(scope.row)">编辑</el-button>
-                          <el-button type="danger" size="small" @click="handlePositionDelete(scope.row)">删除</el-button>
-                        </template>
-                      </el-table-column>
-                    </el-table>
-                  </div>
-
-                  <!-- 职务分页 -->
-                  <div class="pagination-container">
-                    <el-pagination
-                      v-model:current-page="positionCurrentPage"
-                      v-model:page-size="positionPageSize"
-                      :page-sizes="[10, 20, 50, 100]"
-                      :total="positionTotal"
-                      layout="total, sizes, prev, pager, next, jumper"
-                      @size-change="handlePositionSizeChange"
-                      @current-change="handlePositionCurrentChange"
-                    />
-                  </div>
-                </div>
-
-                <!-- 职称管理部分 -->
-                <div class="title-section" style="margin-top: 40px;">
-                  <div class="section-header">
-                    <h4>职称管理</h4>
-                  </div>
-                  
-                  <!-- 职称搜索区域 -->
-                  <div class="search-area">
-                    <el-form :model="titleSearchForm" :inline="true" class="search-form">
-                      <el-form-item label="职称名称:">
-                        <el-input v-model="titleSearchForm.titleName" placeholder="请输入搜索信息" clearable />
-                      </el-form-item>
-                      <el-form-item>
-                        <el-button type="primary" @click="handleTitleSearch">搜索</el-button>
-                        <el-button @click="handleTitleReset">重置</el-button>
-                      </el-form-item>
-                    </el-form>
-                  </div>
-
-                  <!-- 职称列表标题和操作按钮 -->
-                  <div class="list-header">
-                    <h3>职称列表</h3>
-                    <div class="header-actions">
-                      <el-button type="primary" @click="handleTitleSync">手动同步</el-button>
-                      <el-button type="primary" @click="handleTitleImport">导入</el-button>
-                      <el-button type="success" @click="handleTitleAdd">新增</el-button>
-                      <el-button type="warning" @click="handleTitleExport">导出</el-button>
-                    </div>
-                  </div>
-
-                  <!-- 职称表格 -->
-                  <div class="table-container">
-                    <el-table :data="titleTableData" style="width: 100%" stripe table-layout="auto">
-                      <el-table-column prop="id" label="序号" width="80" align="center" />
-                      <el-table-column prop="titleName" label="职称名称" min-width="200" align="center" />
-                      <el-table-column prop="description" label="职称描述" min-width="300" align="center" />
-                      <el-table-column prop="createUser" label="创建账号" min-width="150" align="center" />
-                      <el-table-column prop="createTime" label="创建时间" min-width="180" align="center" />
-                      <el-table-column label="操作" width="200" align="center" fixed="right">
-                        <template #default="scope">
-                          <el-button type="primary" size="small" @click="handleTitleEdit(scope.row)">编辑</el-button>
-                          <el-button type="danger" size="small" @click="handleTitleDelete(scope.row)">删除</el-button>
-                        </template>
-                      </el-table-column>
-                    </el-table>
-                  </div>
-
-                  <!-- 职称分页 -->
-                  <div class="pagination-container">
-                    <el-pagination
-                      v-model:current-page="titleCurrentPage"
-                      v-model:page-size="titlePageSize"
-                      :page-sizes="[10, 20, 50, 100]"
-                      :total="titleTotal"
-                      layout="total, sizes, prev, pager, next, jumper"
-                      @size-change="handleTitleSizeChange"
-                      @current-change="handleTitleCurrentChange"
-                    />
-                  </div>
-                </div>
+              <div style="padding: 20px; text-align: center; color: #666;">
+                职务职称管理功能开发中...
               </div>
             </el-tab-pane>
           </el-tabs>
@@ -628,94 +507,6 @@ export default {
       }
     ])
 
-    // 职务管理相关数据
-    const positionCurrentPage = ref(1)
-    const positionPageSize = ref(10)
-    const positionTotal = ref(100)
-    const positionEditDialogVisible = ref(false)
-    const isPositionEdit = ref(false)
-
-    // 职务搜索表单
-    const positionSearchForm = reactive({
-      positionName: ''
-    })
-
-    // 职务表格数据
-    const positionTableData = ref([
-      {
-        id: 1,
-        positionName: '产品经理',
-        description: '我是描述信息',
-        createUser: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
-      },
-      {
-        id: 2,
-        positionName: 'java开发工程师',
-        description: '我是描述信息',
-        createUser: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
-      },
-      {
-        id: 3,
-        positionName: 'WEB前端开发工程师',
-        description: '我是描述信息',
-        createUser: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
-      },
-      {
-        id: 4,
-        positionName: 'UI设计师',
-        description: '我是描述信息',
-        createUser: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
-      },
-      {
-        id: 5,
-        positionName: '总监',
-        description: '我是描述信息',
-        createUser: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
-      }
-    ])
-
-    // 职称管理相关数据
-    const titleCurrentPage = ref(1)
-    const titlePageSize = ref(10)
-    const titleTotal = ref(50)
-    const titleEditDialogVisible = ref(false)
-    const isTitleEdit = ref(false)
-
-    // 职称搜索表单
-    const titleSearchForm = reactive({
-      titleName: ''
-    })
-
-    // 职称表格数据
-    const titleTableData = ref([
-      {
-        id: 1,
-        titleName: '高级工程师',
-        description: '高级技术职称',
-        createUser: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
-      },
-      {
-        id: 2,
-        titleName: '中级工程师',
-        description: '中级技术职称',
-        createUser: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
-      },
-      {
-        id: 3,
-        titleName: '初级工程师',
-        description: '初级技术职称',
-        createUser: 'liuyashen',
-        createTime: '2023.06.01 10:06:32'
-      }
-    ])
-
     // 方法
     const goToHome = () => {
       router.push('/dashboard')
@@ -731,6 +522,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
+        // 这里可以添加退出登录的逻辑
         ElMessage.success('退出成功')
         router.push('/login')
       })
@@ -822,12 +614,14 @@ export default {
       userFormRef.value.validate((valid) => {
         if (valid) {
           if (isEdit.value) {
+            // 编辑用户
             const index = tableData.value.findIndex(item => item.id === userForm.id)
             if (index > -1) {
               tableData.value[index] = { ...userForm }
               ElMessage.success('编辑成功')
             }
           } else {
+            // 新增用户
             const newUser = {
               ...userForm,
               id: tableData.value.length + 1,
@@ -840,118 +634,6 @@ export default {
           editDialogVisible.value = false
         }
       })
-    }
-
-    // 职务管理相关方法
-    const handlePositionSearch = () => {
-      console.log('搜索职务:', positionSearchForm)
-      ElMessage.success('职务搜索功能开发中...')
-    }
-
-    const handlePositionReset = () => {
-      positionSearchForm.positionName = ''
-      ElMessage.success('重置成功')
-    }
-
-    const handlePositionSync = () => {
-      ElMessage.success('职务手动同步功能开发中...')
-    }
-
-    const handlePositionImport = () => {
-      ElMessage.success('职务导入功能开发中...')
-    }
-
-    const handlePositionAdd = () => {
-      ElMessage.success('新增职务功能开发中...')
-    }
-
-    const handlePositionExport = () => {
-      ElMessage.success('职务导出功能开发中...')
-    }
-
-    const handlePositionEdit = (row) => {
-      ElMessage.success(`编辑职务: ${row.positionName}`)
-    }
-
-    const handlePositionDelete = (row) => {
-      ElMessageBox.confirm(`确定要删除职务 "${row.positionName}" 吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        const index = positionTableData.value.findIndex(item => item.id === row.id)
-        if (index > -1) {
-          positionTableData.value.splice(index, 1)
-          positionTotal.value -= 1
-          ElMessage.success('删除成功')
-        }
-      })
-    }
-
-    const handlePositionSizeChange = (size) => {
-      positionPageSize.value = size
-      console.log(`职务每页显示 ${size} 条`)
-    }
-
-    const handlePositionCurrentChange = (page) => {
-      positionCurrentPage.value = page
-      console.log(`职务当前页: ${page}`)
-    }
-
-    // 职称管理相关方法
-    const handleTitleSearch = () => {
-      console.log('搜索职称:', titleSearchForm)
-      ElMessage.success('职称搜索功能开发中...')
-    }
-
-    const handleTitleReset = () => {
-      titleSearchForm.titleName = ''
-      ElMessage.success('重置成功')
-    }
-
-    const handleTitleSync = () => {
-      ElMessage.success('职称手动同步功能开发中...')
-    }
-
-    const handleTitleImport = () => {
-      ElMessage.success('职称导入功能开发中...')
-    }
-
-    const handleTitleAdd = () => {
-      ElMessage.success('新增职称功能开发中...')
-    }
-
-    const handleTitleExport = () => {
-      ElMessage.success('职称导出功能开发中...')
-    }
-
-    const handleTitleEdit = (row) => {
-      ElMessage.success(`编辑职称: ${row.titleName}`)
-    }
-
-    const handleTitleDelete = (row) => {
-      ElMessageBox.confirm(`确定要删除职称 "${row.titleName}" 吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        const index = titleTableData.value.findIndex(item => item.id === row.id)
-        if (index > -1) {
-          titleTableData.value.splice(index, 1)
-          titleTotal.value -= 1
-          ElMessage.success('删除成功')
-        }
-      })
-    }
-
-    const handleTitleSizeChange = (size) => {
-      titlePageSize.value = size
-      console.log(`职称每页显示 ${size} 条`)
-    }
-
-    const handleTitleCurrentChange = (page) => {
-      titleCurrentPage.value = page
-      console.log(`职称当前页: ${page}`)
     }
 
     onMounted(() => {
@@ -975,18 +657,6 @@ export default {
       treeData,
       treeProps,
       tableData,
-      // 职务管理相关
-      positionCurrentPage,
-      positionPageSize,
-      positionTotal,
-      positionSearchForm,
-      positionTableData,
-      // 职称管理相关
-      titleCurrentPage,
-      titlePageSize,
-      titleTotal,
-      titleSearchForm,
-      titleTableData,
       goToHome,
       goToPersonalCenter,
       logout,
@@ -1003,29 +673,7 @@ export default {
       handleDelete,
       handleSizeChange,
       handleCurrentChange,
-      handleSaveUser,
-      // 职务管理方法
-      handlePositionSearch,
-      handlePositionReset,
-      handlePositionSync,
-      handlePositionImport,
-      handlePositionAdd,
-      handlePositionExport,
-      handlePositionEdit,
-      handlePositionDelete,
-      handlePositionSizeChange,
-      handlePositionCurrentChange,
-      // 职称管理方法
-      handleTitleSearch,
-      handleTitleReset,
-      handleTitleSync,
-      handleTitleImport,
-      handleTitleAdd,
-      handleTitleExport,
-      handleTitleEdit,
-      handleTitleDelete,
-      handleTitleSizeChange,
-      handleTitleCurrentChange
+      handleSaveUser
     }
   }
 }
@@ -1218,15 +866,8 @@ export default {
   gap: 10px;
 }
 
-.header-actions .el-button {
-  font-size: 14px;
-  padding: 8px 16px;
-}
-
-/* 表格样式优化 */
 .table-container {
   margin-bottom: 20px;
-  overflow-x: auto;
 }
 
 .pagination-container {
@@ -1245,22 +886,21 @@ export default {
   gap: 10px;
 }
 
-/* 职务职称管理样式 */
-.position-management {
-  padding: 20px;
+/* 按钮样式优化 */
+.header-actions {
+  display: flex;
+  gap: 10px;
 }
 
-.section-header {
+.header-actions .el-button {
+  font-size: 14px;
+  padding: 8px 16px;
+}
+
+/* 表格样式优化 */
+.table-container {
   margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #4A90E2;
-}
-
-.section-header h4 {
-  margin: 0;
-  color: #333;
-  font-size: 16px;
-  font-weight: 600;
+  overflow-x: auto;
 }
 
 /* Element Plus 自定义样式 */
