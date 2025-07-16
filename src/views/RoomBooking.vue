@@ -629,14 +629,14 @@
 
                 <!-- 数据表格 -->
                 <div class="records-table">
-                  <el-table :data="paginatedRecordsData" style="width: 100%" size="default">
-                    <el-table-column prop="roomName" label="预约教室" width="220" />
-                    <el-table-column prop="bookingCount" label="预约次数（次）" width="160" align="center" />
-                    <el-table-column prop="usageHours" label="预约累计时长（分）" width="180" align="center" />
-                    <el-table-column prop="actualUsers" label="实计预约人数（人）" width="180" align="center" />
-                    <el-table-column label="操作" width="140" align="center">
+                  <el-table :data="paginatedRecordsData" style="width: 100%">
+                    <el-table-column prop="roomName" label="预约教室" min-width="200" />
+                    <el-table-column prop="bookingCount" label="预约次数（次）" width="140" align="center" />
+                    <el-table-column prop="usageHours" label="预约累计时长（分）" width="160" align="center" />
+                    <el-table-column prop="actualUsers" label="实计预约人数（人）" width="160" align="center" />
+                    <el-table-column label="操作" width="120" align="center">
                       <template #default="scope">
-                        <el-button type="primary" link size="small" @click="viewDetails(scope.row)">
+                        <el-button type="primary" size="small" @click="viewDetails(scope.row)">
                           查看详情
                         </el-button>
                       </template>
@@ -1793,7 +1793,8 @@ export default {
       handleRecordsCurrentChange,
       showApprovalDialog,
       handleApprovalDialogClose,
-      submitApproval
+      submitApproval,
+      viewMore
     }
   }
 }
@@ -2114,13 +2115,33 @@ export default {
   gap: 10px;
 }
 
-/* 数据记录表格 */
+/* 数据记录表格 - 修复右侧空白问题 */
 .records-table {
   background: white;
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 确保表格样式与其他表格一致 */
+.records-table .el-table {
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+}
+
+.records-table .el-table th {
+  background-color: #fafafa;
+  font-weight: 600;
+  color: #333;
+}
+
+.records-table .el-table td {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.records-table .el-table tr:hover {
+  background-color: #f5f7fa;
 }
 
 .content-placeholder h3 {
@@ -2768,6 +2789,66 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* 确保借用管理表格样式与数据记录表格一致 */
+.booking-table .el-table {
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+}
+
+.booking-table .el-table th {
+  background-color: #fafafa;
+  font-weight: 600;
+  color: #333;
+}
+
+.booking-table .el-table td {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.booking-table .el-table tr:hover {
+  background-color: #f5f7fa;
+}
+
+/* 审批表格样式 */
+.approval-table .el-table {
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+}
+
+.approval-table .el-table th {
+  background-color: #fafafa;
+  font-weight: 600;
+  color: #333;
+}
+
+.approval-table .el-table td {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.approval-table .el-table tr:hover {
+  background-color: #f5f7fa;
+}
+
+/* 设置表格样式 */
+.content-table .el-table {
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+}
+
+.content-table .el-table th {
+  background-color: #fafafa;
+  font-weight: 600;
+  color: #333;
+}
+
+.content-table .el-table td {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.content-table .el-table tr:hover {
+  background-color: #f5f7fa;
+}
+
 .pagination {
   display: flex;
   justify-content: center;
@@ -2838,6 +2919,25 @@ export default {
 
   .export-section {
     justify-content: center;
+  }
+
+  /* 为小屏幕优化表格 */
+  .records-table .el-table,
+  .booking-table .el-table,
+  .approval-table .el-table,
+  .content-table .el-table {
+    font-size: 12px;
+  }
+  
+  .records-table .el-table th,
+  .records-table .el-table td,
+  .booking-table .el-table th,
+  .booking-table .el-table td,
+  .approval-table .el-table th,
+  .approval-table .el-table td,
+  .content-table .el-table th,
+  .content-table .el-table td {
+    padding: 8px 4px;
   }
 }
 
