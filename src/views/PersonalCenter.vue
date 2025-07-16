@@ -3,7 +3,7 @@
     <!-- 顶部导航栏 -->
     <div class="header">
       <div class="header-left">
-        <div class="logo">
+        <div class="logo" @click="goToHome" style="cursor: pointer;">
           <el-icon size="24"><home-filled /></el-icon>
         </div>
         <span class="title">个人中心</span>
@@ -17,164 +17,328 @@
           <span class="dropdown-link">
             <el-icon><grid /></el-icon>
           </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="logout">退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
         </el-dropdown>
       </div>
     </div>
 
     <div class="main-container">
-      <!-- 左侧个人信息 -->
+      <!-- 左侧导航 -->
       <div class="sidebar">
-        <div class="user-profile">
-          <!-- 头像区域 -->
-          <div class="avatar-section">
-            <div class="avatar-container">
-              <img v-if="userInfo.avatar" :src="userInfo.avatar" class="user-avatar" />
-              <div v-else class="default-avatar">
-                <span>头像</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 用户信息 -->
-          <div class="user-info">
-            <h3 class="username">{{ userInfo.name }}</h3>
-            <p class="user-role">{{ userInfo.role }}</p>
-          </div>
-
-          <!-- 功能菜单 -->
-          <div class="menu-list">
-            <div class="menu-item" @click="handleChangePassword">
-              <el-icon><lock /></el-icon>
-              <span>修改密码</span>
-            </div>
-            <div class="menu-item active" @click="handleMessageCenter">
-              <el-icon><message /></el-icon>
-              <span>消息中心</span>
-            </div>
-          </div>
-
-          <!-- 退出登录 -->
-          <div class="logout-section">
-            <el-button class="logout-btn" @click="handleLogout">退出登录</el-button>
-          </div>
+        <!-- 添加首页导航 -->
+        <div class="nav-item" @click="goToHome">
+          <el-icon><home /></el-icon>
+          <span>首页</span>
+        </div>
+        
+        <div class="nav-item" :class="{ active: activeMenu === 'profile' }" @click="setActiveMenu('profile')">
+          <el-icon><user /></el-icon>
+          <span>个人信息</span>
+        </div>
+        <div class="nav-item" :class="{ active: activeMenu === 'password' }" @click="setActiveMenu('password')">
+          <el-icon><lock /></el-icon>
+          <span>修改密码</span>
+        </div>
+        <div class="nav-item" :class="{ active: activeMenu === 'settings' }" @click="setActiveMenu('settings')">
+          <el-icon><setting /></el-icon>
+          <span>系统设置</span>
         </div>
       </div>
 
       <!-- 右侧内容区域 -->
       <div class="main-content">
-        <div class="content-wrapper">
-          <!-- 消息列表 -->
-          <div class="message-list">
-            <div 
-              v-for="message in messageList" 
-              :key="message.id"
-              class="message-item"
-              :class="{ unread: !message.isRead }"
-            >
-              <div class="message-type">
-                <div class="type-icon" :class="getMessageTypeClass(message.type)">
-                  {{ getMessageTypeLabel(message.type) }}
-                </div>
-              </div>
-              <div class="message-content">
-                <div class="message-title">{{ message.content }}</div>
-                <div class="message-time">{{ message.time }}</div>
-              </div>
-              <div class="message-dot" v-if="!message.isRead"></div>
-            </div>
+        <!-- 面包屑导航 -->
+        <div class="breadcrumb">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item @click="goToHome" style="cursor: pointer; color: #4A90E2;">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>个人中心</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ getMenuTitle(activeMenu) }}</el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
+
+        <!-- 个人信息页面 -->
+        <div v-if="activeMenu === 'profile'" class="profile-section">
+          <div class="section-header">
+            <h2>个人信息</h2>
+            <el-button type="primary" @click="toggleEdit">
+              {{ editMode ? '取消编辑' : '编辑信息' }}
+            </el-button>
           </div>
 
-          <!-- 取消按钮 -->
-          <div class="action-bar">
-            <el-button class="cancel-btn" @click="handleCancel">取消</el-button>
+          <div class="profile-content">
+            <div class="avatar-section">
+              <div class="avatar-upload">
+                <img :src="profileForm.avatar || '/default-avatar.png'" alt="头像" class="avatar-img" />
+                <div v-if="editMode" class="avatar-overlay" @click="handleAvatarUpload">
+                  <el-icon><camera /></el-icon>
+                  <span>更换头像</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <el-form ref="profileFormRef" :model="profileForm" :rules="profileRules" label-width="120px">
+                <el-row :gutter="20">
+                  <el-col :span="12">
+                    <el-form-item label="用户名:" prop="username">
+                      <el-input v-model="profileForm.username" :disabled="true" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="姓名:" prop="realName">
+                      <el-input v-model="profileForm.realName" :disabled="!editMode" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="邮箱:" prop="email">
+                      <el-input v-model="profileForm.email" :disabled="!editMode" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="手机号:" prop="phone">
+                      <el-input v-model="profileForm.phone" :disabled="!editMode" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="部门:" prop="department">
+                      <el-input v-model="profileForm.department" :disabled="!editMode" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="职位:" prop="position">
+                      <el-input v-model="profileForm.position" :disabled="!editMode" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="24">
+                    <el-form-item label="个人简介:" prop="bio">
+                      <el-input 
+                        v-model="profileForm.bio" 
+                        type="textarea" 
+                        :rows="4"
+                        :disabled="!editMode" 
+                        placeholder="请输入个人简介"
+                      />
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+
+                <!-- 编辑模式下的操作按钮 -->
+                <div v-if="editMode" class="form-actions">
+                  <el-button @click="cancelEdit">取消</el-button>
+                  <el-button type="primary" @click="saveProfile">保存</el-button>
+                </div>
+              </el-form>
+            </div>
+          </div>
+        </div>
+
+        <!-- 修改密码页面 -->
+        <div v-if="activeMenu === 'password'" class="password-section">
+          <div class="section-header">
+            <h2>修改密码</h2>
+          </div>
+
+          <div class="password-content">
+            <el-form ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-width="120px">
+              <el-form-item label="当前密码:" prop="currentPassword">
+                <el-input 
+                  v-model="passwordForm.currentPassword" 
+                  type="password" 
+                  show-password
+                  placeholder="请输入当前密码" 
+                />
+              </el-form-item>
+              <el-form-item label="新密码:" prop="newPassword">
+                <el-input 
+                  v-model="passwordForm.newPassword" 
+                  type="password" 
+                  show-password
+                  placeholder="请输入新密码" 
+                />
+              </el-form-item>
+              <el-form-item label="确认密码:" prop="confirmPassword">
+                <el-input 
+                  v-model="passwordForm.confirmPassword" 
+                  type="password" 
+                  show-password
+                  placeholder="请再次输入新密码" 
+                />
+              </el-form-item>
+              
+              <div class="form-actions">
+                <el-button @click="resetPasswordForm">重置</el-button>
+                <el-button type="primary" @click="changePassword">修改密码</el-button>
+              </div>
+            </el-form>
+          </div>
+        </div>
+
+        <!-- 系统设置页面 -->
+        <div v-if="activeMenu === 'settings'" class="settings-section">
+          <div class="section-header">
+            <h2>系统设置</h2>
+          </div>
+
+          <div class="settings-content">
+            <div class="settings-group">
+              <h3>界面设置</h3>
+              <div class="setting-item">
+                <div class="setting-label">
+                  <span>主题模式</span>
+                  <small>选择您喜欢的界面主题</small>
+                </div>
+                <el-select v-model="settingsForm.theme" placeholder="请选择主题">
+                  <el-option label="浅色主题" value="light" />
+                  <el-option label="深色主题" value="dark" />
+                  <el-option label="自动" value="auto" />
+                </el-select>
+              </div>
+              <div class="setting-item">
+                <div class="setting-label">
+                  <span>语言设置</span>
+                  <small>选择界面显示语言</small>
+                </div>
+                <el-select v-model="settingsForm.language" placeholder="请选择语言">
+                  <el-option label="简体中文" value="zh-CN" />
+                  <el-option label="English" value="en-US" />
+                </el-select>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <h3>通知设置</h3>
+              <div class="setting-item">
+                <div class="setting-label">
+                  <span>邮件通知</span>
+                  <small>接收系统邮件通知</small>
+                </div>
+                <el-switch v-model="settingsForm.emailNotification" />
+              </div>
+              <div class="setting-item">
+                <div class="setting-label">
+                  <span>短信通知</span>
+                  <small>接收系统短信通知</small>
+                </div>
+                <el-switch v-model="settingsForm.smsNotification" />
+              </div>
+              <div class="setting-item">
+                <div class="setting-label">
+                  <span>桌面通知</span>
+                  <small>接收浏览器桌面通知</small>
+                </div>
+                <el-switch v-model="settingsForm.desktopNotification" />
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <h3>安全设置</h3>
+              <div class="setting-item">
+                <div class="setting-label">
+                  <span>自动锁屏</span>
+                  <small>设置自动锁屏时间</small>
+                </div>
+                <el-select v-model="settingsForm.autoLock" placeholder="请选择时间">
+                  <el-option label="从不" value="never" />
+                  <el-option label="5分钟" value="5min" />
+                  <el-option label="15分钟" value="15min" />
+                  <el-option label="30分钟" value="30min" />
+                  <el-option label="1小时" value="1hour" />
+                </el-select>
+              </div>
+              <div class="setting-item">
+                <div class="setting-label">
+                  <span>登录日志</span>
+                  <small>记录登录活动</small>
+                </div>
+                <el-switch v-model="settingsForm.loginLog" />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <el-button @click="resetSettings">重置设置</el-button>
+              <el-button type="primary" @click="saveSettings">保存设置</el-button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- 修改密码弹窗 -->
-    <el-dialog
-      v-model="passwordDialogVisible"
-      title="修改密码"
-      width="500px"
-      :before-close="handlePasswordDialogClose"
-    >
-      <el-form
-        ref="passwordFormRef"
-        :model="passwordForm"
-        :rules="passwordRules"
-        label-width="100px"
-      >
-        <el-form-item label="原密码:" prop="oldPassword">
-          <el-input 
-            v-model="passwordForm.oldPassword" 
-            type="password"
-            placeholder="请输入原密码"
-            show-password
-          />
-        </el-form-item>
-        <el-form-item label="新密码:" prop="newPassword">
-          <el-input 
-            v-model="passwordForm.newPassword" 
-            type="password"
-            placeholder="请输入新密码"
-            show-password
-          />
-        </el-form-item>
-        <el-form-item label="确认密码:" prop="confirmPassword">
-          <el-input 
-            v-model="passwordForm.confirmPassword" 
-            type="password"
-            placeholder="请再次输入新密码"
-            show-password
-          />
-        </el-form-item>
-      </el-form>
-
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="handlePasswordDialogClose">取消</el-button>
-          <el-button type="primary" @click="handlePasswordSubmit">确定</el-button>
-        </div>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 
 export default {
   name: 'PersonalCenter',
   setup() {
     const router = useRouter()
+    const activeMenu = ref('profile')
+    const editMode = ref(false)
+    const profileFormRef = ref()
     const passwordFormRef = ref()
-    const passwordDialogVisible = ref(false)
 
-    const userInfo = reactive({
-      name: '张三',
-      role: '管理员',
+    // 个人信息表单
+    const profileForm = reactive({
+      username: 'admin',
+      realName: '系统管理员',
+      email: 'admin@example.com',
+      phone: '13800138000',
+      department: '技术部',
+      position: '系统管理员',
+      bio: '负责系统的整体管理和维护工作',
       avatar: ''
     })
 
+    // 密码修改表单
     const passwordForm = reactive({
-      oldPassword: '',
+      currentPassword: '',
       newPassword: '',
       confirmPassword: ''
     })
 
+    // 系统设置表单
+    const settingsForm = reactive({
+      theme: 'light',
+      language: 'zh-CN',
+      emailNotification: true,
+      smsNotification: false,
+      desktopNotification: true,
+      autoLock: '30min',
+      loginLog: true
+    })
+
+    // 个人信息验证规则
+    const profileRules = {
+      realName: [
+        { required: true, message: '请输入姓名', trigger: 'blur' }
+      ],
+      email: [
+        { required: true, message: '请输入邮箱', trigger: 'blur' },
+        { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+      ],
+      phone: [
+        { required: true, message: '请输入手机号', trigger: 'blur' },
+        { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
+      ]
+    }
+
+    // 密码验证规则
     const passwordRules = {
-      oldPassword: [
-        { required: true, message: '请输入原密码', trigger: 'blur' }
+      currentPassword: [
+        { required: true, message: '请输入当前密码', trigger: 'blur' }
       ],
       newPassword: [
         { required: true, message: '请输入新密码', trigger: 'blur' },
         { min: 6, max: 20, message: '密码长度应为6-20个字符', trigger: 'blur' }
       ],
       confirmPassword: [
-        { required: true, message: '请确认新密码', trigger: 'blur' },
+        { required: true, message: '请再次输入新密码', trigger: 'blur' },
         {
           validator: (rule, value, callback) => {
             if (value !== passwordForm.newPassword) {
@@ -188,138 +352,120 @@ export default {
       ]
     }
 
-    const messageList = ref([
-      {
-        id: 1,
-        type: 'info',
-        content: '今天西安高新区全项目均明，市民期盼基础设施行安全',
-        time: '2020-10-21 19:58:09',
-        isRead: false
-      },
-      {
-        id: 2,
-        type: 'important',
-        content: '中午12:00集团开会谈管理人员提前5分钟到场准备会议室',
-        time: '2020-10-21 19:58:09',
-        isRead: false
-      },
-      {
-        id: 3,
-        type: 'normal',
-        content: '中午12:00集团开会谈管理人员提前5分钟',
-        time: '2020-10-21 19:58:09',
-        isRead: true
-      },
-      {
-        id: 4,
-        type: 'info',
-        content: '今天西安高新区全项目均明，市民期盼基础设施行安全',
-        time: '2020-10-21 19:58:09',
-        isRead: false
-      },
-      {
-        id: 5,
-        type: 'important',
-        content: '中午12:00集团开会谈管理人员提前5分钟到场准备会议室',
-        time: '2020-10-21 19:58:09',
-        isRead: false
-      },
-      {
-        id: 6,
-        type: 'normal',
-        content: '中午12:00集团开会谈管理人员提前5分钟',
-        time: '2020-10-21 19:58:09',
-        isRead: true
-      },
-      {
-        id: 7,
-        type: 'important',
-        content: '中午12:00集团开会谈管理人员提前5分钟',
-        time: '2020-10-21 19:58:09',
-        isRead: false
+    // 返回首页
+    const goToHome = () => {
+      router.push('/dashboard')
+    }
+
+    const logout = () => {
+      console.log('退出登录')
+    }
+
+    // 菜单相关方法
+    const setActiveMenu = (menu) => {
+      activeMenu.value = menu
+    }
+
+    const getMenuTitle = (menu) => {
+      const titleMap = {
+        'profile': '个人信息',
+        'password': '修改密码',
+        'settings': '系统设置'
       }
-    ])
+      return titleMap[menu] || ''
+    }
 
-    const getMessageTypeClass = (type) => {
-      const typeMap = {
-        info: 'type-info',
-        important: 'type-important',
-        normal: 'type-normal'
+    // 个人信息相关方法
+    const toggleEdit = () => {
+      editMode.value = !editMode.value
+      if (!editMode.value) {
+        // 取消编辑时重置表单
+        cancelEdit()
       }
-      return typeMap[type] || 'type-normal'
     }
 
-    const getMessageTypeLabel = (type) => {
-      const labelMap = {
-        info: '告',
-        important: '通',
-        normal: '通'
-      }
-      return labelMap[type] || '通'
+    const cancelEdit = () => {
+      editMode.value = false
+      // 这里可以重置表单数据到原始状态
     }
 
-    const handleChangePassword = () => {
-      passwordDialogVisible.value = true
-    }
-
-    const handleMessageCenter = () => {
-      console.log('进入消息中心')
-    }
-
-    const handleLogout = () => {
-      ElMessageBox.confirm(
-        '确定要退出登录吗？',
-        '确认退出',
-        {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning',
-        }
-      ).then(() => {
-        ElMessage.success('退出登录成功')
-        router.push('/login')
-      }).catch(() => {
-        ElMessage.info('已取消退出')
-      })
-    }
-
-    const handleCancel = () => {
-      router.back()
-    }
-
-    const handlePasswordDialogClose = () => {
-      passwordDialogVisible.value = false
-      passwordForm.oldPassword = ''
-      passwordForm.newPassword = ''
-      passwordForm.confirmPassword = ''
-    }
-
-    const handlePasswordSubmit = async () => {
+    const saveProfile = async () => {
       try {
-        await passwordFormRef.value.validate()
-        // 这里处理密码修改逻辑
-        ElMessage.success('密码修改成功')
-        handlePasswordDialogClose()
+        await profileFormRef.value.validate()
+        // 保存个人信息
+        editMode.value = false
+        ElMessage.success('个人信息保存成功')
       } catch (error) {
         console.log('表单验证失败:', error)
       }
     }
 
+    const handleAvatarUpload = () => {
+      console.log('上传头像')
+      // 这里可以实现头像上传逻辑
+    }
+
+    // 密码相关方法
+    const changePassword = async () => {
+      try {
+        await passwordFormRef.value.validate()
+        // 修改密码
+        resetPasswordForm()
+        ElMessage.success('密码修改成功')
+      } catch (error) {
+        console.log('表单验证失败:', error)
+      }
+    }
+
+    const resetPasswordForm = () => {
+      Object.assign(passwordForm, {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      })
+    }
+
+    // 设置相关方法
+    const saveSettings = () => {
+      // 保存系统设置
+      ElMessage.success('设置保存成功')
+    }
+
+    const resetSettings = () => {
+      Object.assign(settingsForm, {
+        theme: 'light',
+        language: 'zh-CN',
+        emailNotification: true,
+        smsNotification: false,
+        desktopNotification: true,
+        autoLock: '30min',
+        loginLog: true
+      })
+      ElMessage.success('设置已重置')
+    }
+
     return {
-      userInfo,
-      messageList,
-      passwordDialogVisible,
-      passwordForm,
+      activeMenu,
+      editMode,
+      profileFormRef,
       passwordFormRef,
+      profileForm,
+      passwordForm,
+      settingsForm,
+      profileRules,
       passwordRules,
-      getMessageTypeClass,
-      getMessageTypeLabel,
-      handleChangePassword,
-      handleMessageCenter,
-      handleLogout,
-      handleCancel,
-      handlePasswordDialogClose,
-      handlePasswordSubmit
+      goToHome,  // 新增返回首页方法
+      logout,
+      setActiveMenu,
+      getMenuTitle,
+      toggleEdit,
+      cancelEdit,
+      saveProfile,
+      handleAvatarUpload,
+      changePassword,
+      resetPasswordForm,
+      saveSettings,
+      resetSettings
     }
   }
 }
@@ -356,6 +502,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.2s;
+}
+
+.logo:hover {
+  transform: scale(1.05);
 }
 
 .title {
@@ -402,248 +553,186 @@ export default {
 }
 
 .sidebar {
-  width: 320px;
+  width: 200px;
   background: white;
+  border-right: 1px solid #e8e8e8;
+  padding: 15px;
   flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
 }
 
-.user-profile {
-  padding: 40px 30px;
-  text-align: center;
-  height: 100%;
+.nav-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  transition: all 0.3s;
+  color: #666;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
-.avatar-section {
+.nav-item:hover {
+  background-color: #f0f2f5;
+  color: #4A90E2;
+}
+
+.nav-item.active {
+  background-color: #4A90E2;
+  color: white;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.breadcrumb {
+  margin-bottom: 20px;
+  padding: 15px 0;
+}
+
+.breadcrumb :deep(.el-breadcrumb__item:not(:last-child)) {
+  cursor: pointer;
+}
+
+.breadcrumb :deep(.el-breadcrumb__item:not(:last-child):hover) {
+  color: #357ABD;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 30px;
 }
 
-.avatar-container {
+.section-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+.profile-section,
+.password-section,
+.settings-section {
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-content {
+  display: flex;
+  gap: 40px;
+}
+
+.avatar-section {
+  flex-shrink: 0;
+}
+
+.avatar-upload {
+  position: relative;
   width: 120px;
   height: 120px;
-  margin: 0 auto;
   border-radius: 50%;
   overflow: hidden;
   border: 3px solid #e8e8e8;
 }
 
-.user-avatar {
+.avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.default-avatar {
-  width: 100%;
-  height: 100%;
-  background-color: #f5f5f5;
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #999;
-  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
-.user-info {
+.avatar-upload:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-overlay span {
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.form-section {
+  flex: 1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.password-content {
+  max-width: 500px;
+}
+
+.settings-content {
+  max-width: 600px;
+}
+
+.settings-group {
   margin-bottom: 40px;
 }
 
-.user-info .username {
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.user-role {
-  font-size: 16px;
-  color: #666;
-  margin: 0;
-}
-
-.menu-list {
-  flex: 1;
-}
-
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 15px 20px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-  color: #666;
-}
-
-.menu-item:hover {
-  background-color: #f0f2f5;
-  color: #4A90E2;
-}
-
-.menu-item.active {
-  background-color: #4A90E2;
-  color: white;
-}
-
-.logout-section {
-  margin-top: auto;
-  padding-top: 20px;
-}
-
-.logout-btn {
-  width: 100%;
-  padding: 12px;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  color: #666;
-}
-
-.logout-btn:hover {
-  background-color: #e8e8e8;
-  border-color: #ccc;
-}
-
-.main-content {
-  flex: 1;
-  background: white;
-  display: flex;
-  flex-direction: column;
-}
-
-.content-wrapper {
-  flex: 1;
-  padding: 20px 30px;
-  display: flex;
-  flex-direction: column;
-}
-
-.message-list {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.message-item {
-  display: flex;
-  align-items: center;
-  padding: 15px 0;
-  border-bottom: 1px solid #f0f0f0;
-  position: relative;
-}
-
-.message-item.unread {
-  background-color: #fafafa;
-}
-
-.message-type {
-  margin-right: 15px;
-}
-
-.type-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.type-info {
-  background-color: #4A90E2;
-}
-
-.type-important {
-  background-color: #e74c3c;
-}
-
-.type-normal {
-  background-color: #95a5a6;
-}
-
-.message-content {
-  flex: 1;
-}
-
-.message-title {
-  font-size: 16px;
-  color: #333;
-  line-height: 1.5;
-  margin-bottom: 5px;
-}
-
-.message-time {
-  font-size: 14px;
-  color: #999;
-}
-
-.message-dot {
-  width: 8px;
-  height: 8px;
-  background-color: #e74c3c;
-  border-radius: 50%;
-  margin-left: 15px;
-}
-
-.action-bar {
-  padding: 20px 0;
-  text-align: right;
-  border-top: 1px solid #f0f0f0;
-  margin-top: auto;
-}
-
-.cancel-btn {
-  padding: 10px 30px;
-  background-color: #95a5a6;
-  border: none;
-  color: white;
-}
-
-.cancel-btn:hover {
-  background-color: #7f8c8d;
-}
-
-.dialog-footer {
-  text-align: right;
-}
-
-/* Element Plus 组件样式覆盖 */
-:deep(.el-form-item) {
-  margin-bottom: 20px;
-}
-
-:deep(.el-form-item__label) {
-  font-weight: 500;
-  color: #333;
-}
-
-:deep(.el-dialog__header) {
-  background-color: #f8f9fa;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-:deep(.el-dialog__title) {
+.settings-group h3 {
+  margin: 0 0 20px 0;
   font-size: 18px;
   font-weight: 600;
   color: #333;
+  border-bottom: 2px solid #4A90E2;
+  padding-bottom: 10px;
 }
 
-/* 响应式调整 */
-@media (max-width: 1200px) {
-  .main-container {
-    flex-direction: column;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: auto;
-  }
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.setting-label {
+  flex: 1;
+}
+
+.setting-label span {
+  display: block;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.setting-label small {
+  color: #999;
+  font-size: 13px;
 }
 </style>

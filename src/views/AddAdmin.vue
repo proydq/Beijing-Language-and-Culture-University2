@@ -3,7 +3,7 @@
     <!-- 顶部导航栏 -->
     <div class="header">
       <div class="header-left">
-        <div class="logo">
+        <div class="logo" @click="goToHome" style="cursor: pointer;">
           <el-icon size="24"><home-filled /></el-icon>
         </div>
         <span class="title">功能模块</span>
@@ -24,6 +24,11 @@
     <div class="main-container">
       <!-- 左侧导航 -->
       <div class="sidebar">
+        <!-- 添加首页导航 -->
+        <div class="nav-item" @click="goToHome">
+          <el-icon><home /></el-icon>
+          <span>首页</span>
+        </div>
         <div class="nav-item" @click="goToRoleManagement">
           <span>角色管理</span>
         </div>
@@ -34,6 +39,16 @@
 
       <!-- 右侧主内容 -->
       <div class="main-content">
+        <!-- 面包屑导航 -->
+        <div class="breadcrumb">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item @click="goToHome" style="cursor: pointer; color: #4A90E2;">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>权限管理</el-breadcrumb-item>
+            <el-breadcrumb-item @click="goToAdminManagement" style="cursor: pointer; color: #4A90E2;">管理员设置</el-breadcrumb-item>
+            <el-breadcrumb-item>添加管理员</el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
+
         <!-- 页面标题 -->
         <div class="page-header">
           <el-button type="text" @click="goBack" class="back-button">
@@ -86,43 +101,21 @@
           </div>
 
           <!-- 已选择的用户列表 -->
-          <div v-else class="selected-users-table">
-            <el-table :data="selectedUsers" style="width: 100%" stripe>
-              <el-table-column prop="id" label="序号" width="80" />
-              <el-table-column label="头像" width="80" align="center">
-                <template #default>
-                  <el-avatar :size="40" :icon="UserFilled" />
-                </template>
-              </el-table-column>
-              <el-table-column label="人员信息" width="120" align="center">
-                <template #default>
-                  <el-avatar :size="40" :icon="UserFilled" />
-                </template>
-              </el-table-column>
-              <el-table-column prop="name" label="姓名" width="100" />
-              <el-table-column prop="gender" label="性别" width="80" />
-              <el-table-column prop="phone" label="手机号" width="120" />
-              <el-table-column prop="department" label="所属部门" min-width="120" />
-              <el-table-column prop="workId" label="工号" width="120" />
-              <el-table-column label="操作" width="100" fixed="right">
-                <template #default="scope">
-                  <el-button 
-                    type="danger" 
-                    size="small" 
-                    @click="removeUser(scope.$index)"
-                  >
-                    删除
-                  </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
+          <div v-else class="selected-users">
+            <div v-for="(user, index) in selectedUsers" :key="user.id" class="user-item">
+              <div class="user-info">
+                <span class="user-name">{{ user.name }}</span>
+                <span class="user-detail">{{ user.gender }} | {{ user.phone }} | {{ user.department }}</span>
+              </div>
+              <el-button type="danger" size="small" @click="removeUser(index)">移除</el-button>
+            </div>
           </div>
         </div>
 
-        <!-- 底部按钮 -->
-        <div class="footer-buttons">
+        <!-- 底部操作按钮 -->
+        <div class="footer-actions">
           <el-button @click="goBack">取消</el-button>
-          <el-button type="primary" @click="handleConfirm" :disabled="selectedUsers.length === 0 || !selectedRole">确认</el-button>
+          <el-button type="primary" @click="handleConfirm">确认</el-button>
         </div>
       </div>
     </div>
@@ -130,76 +123,45 @@
     <!-- 选择用户弹窗 -->
     <el-dialog
       v-model="selectUserDialogVisible"
-      title="管理员列表"
+      title="选择用户"
       width="80%"
-      :before-close="handleDialogClose"
+      @close="handleDialogClose"
     >
       <!-- 搜索区域 -->
       <div class="search-area">
-        <el-form :model="searchForm" class="search-form">
-          <el-row :gutter="20" align="middle">
-            <el-col :span="5">
-              <el-form-item label="人员外号:" prop="name">
-                <el-input v-model="searchForm.name" placeholder="请输入姓名信息" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="5">
-              <el-form-item label="手机号:" prop="phone">
-                <el-input v-model="searchForm.phone" placeholder="请输入姓名信息" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="4">
-              <el-form-item label="工号:" prop="workId">
-                <el-input v-model="searchForm.workId" placeholder="请输入姓名信息" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="5">
-              <el-form-item label="部门:" prop="department">
-                <el-select v-model="searchForm.department" placeholder="请选择信息" style="width: 100%">
-                  <el-option label="全部" value="" />
-                  <el-option label="产品部门" value="产品部门" />
-                  <el-option label="技术部门" value="技术部门" />
-                  <el-option label="市场部门" value="市场部门" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="5">
-              <el-form-item>
-                <div class="search-buttons">
-                  <el-button type="primary" @click="handleSearch">搜索</el-button>
-                  <el-button @click="handleReset">重置</el-button>
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
+        <el-form :model="searchForm" :inline="true">
+          <el-form-item label="姓名:">
+            <el-input v-model="searchForm.name" placeholder="请输入姓名" />
+          </el-form-item>
+          <el-form-item label="手机号:">
+            <el-input v-model="searchForm.phone" placeholder="请输入手机号" />
+          </el-form-item>
+          <el-form-item label="工号:">
+            <el-input v-model="searchForm.workId" placeholder="请输入工号" />
+          </el-form-item>
+          <el-form-item label="部门:">
+            <el-input v-model="searchForm.department" placeholder="请输入部门" />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleSearch">搜索</el-button>
+            <el-button @click="handleReset">重置</el-button>
+          </el-form-item>
         </el-form>
       </div>
 
-      <!-- 用户列表表格 -->
+      <!-- 用户列表 -->
       <div class="user-table">
         <el-table 
           ref="userTableRef"
           :data="filteredUserList" 
           style="width: 100%" 
-          stripe
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="55" />
-          <el-table-column prop="id" label="序号" width="80" />
-          <el-table-column label="头像" width="80" align="center">
-            <template #default>
-              <el-avatar :size="40" :icon="UserFilled" />
-            </template>
-          </el-table-column>
-          <el-table-column label="人员信息" width="120" align="center">
-            <template #default>
-              <el-avatar :size="40" :icon="UserFilled" />
-            </template>
-          </el-table-column>
           <el-table-column prop="name" label="姓名" width="100" />
           <el-table-column prop="gender" label="性别" width="80" />
-          <el-table-column prop="phone" label="手机号" width="120" />
-          <el-table-column prop="department" label="所属部门" min-width="120" />
+          <el-table-column prop="phone" label="手机号" width="130" />
+          <el-table-column prop="department" label="部门" width="120" />
           <el-table-column prop="workId" label="工号" width="120" />
           <el-table-column label="操作" width="100">
             <template #default="scope">
@@ -304,12 +266,21 @@ export default {
       })
     })
 
+    // 返回首页
+    const goToHome = () => {
+      router.push('/dashboard')
+    }
+
     const goBack = () => {
       router.back()
     }
 
     const goToRoleManagement = () => {
       router.push('/role-management')
+    }
+
+    const goToAdminManagement = () => {
+      router.push('/admin-management')
     }
 
     const handleRoleChange = (value) => {
@@ -409,8 +380,10 @@ export default {
       roleOptions,
       filteredUserList,
       UserFilled,
+      goToHome,  // 新增返回首页方法
       goBack,
       goToRoleManagement,
+      goToAdminManagement,  // 新增返回管理员管理方法
       handleRoleChange,
       showSelectUserDialog,
       handleDialogClose,
@@ -456,6 +429,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.2s;
+}
+
+.logo:hover {
+  transform: scale(1.05);
 }
 
 .title {
@@ -516,6 +494,9 @@ export default {
   margin-bottom: 8px;
   transition: all 0.3s;
   color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .nav-item:hover {
@@ -534,6 +515,19 @@ export default {
   overflow-y: auto;
 }
 
+.breadcrumb {
+  margin-bottom: 20px;
+  padding: 15px 0;
+}
+
+.breadcrumb :deep(.el-breadcrumb__item:not(:last-child)) {
+  cursor: pointer;
+}
+
+.breadcrumb :deep(.el-breadcrumb__item:not(:last-child):hover) {
+  color: #357ABD;
+}
+
 .page-header {
   display: flex;
   align-items: center;
@@ -549,26 +543,17 @@ export default {
   font-size: 16px;
 }
 
-.page-header h2 {
-  margin: 0;
-  font-size: 24px;
-  color: #333;
-}
-
 .role-selection {
   background: white;
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  gap: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .section-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
+  margin-bottom: 15px;
   color: #333;
 }
 
@@ -577,7 +562,7 @@ export default {
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .content-header {
@@ -588,10 +573,10 @@ export default {
 }
 
 .content-title {
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
   color: #333;
-  margin: 0;
 }
 
 .notice-area {
@@ -600,48 +585,63 @@ export default {
 
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 60px 0;
   color: #999;
 }
 
 .empty-icon {
   margin-bottom: 20px;
-  color: #ddd;
 }
 
 .empty-text {
   font-size: 16px;
 }
 
-.selected-users-table {
+.selected-users {
   margin-top: 20px;
 }
 
-.footer-buttons {
+.user-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.user-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.user-detail {
+  font-size: 12px;
+  color: #666;
+}
+
+.footer-actions {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
   display: flex;
   justify-content: center;
   gap: 20px;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .search-area {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
   margin-bottom: 20px;
-}
-
-.search-form {
-  width: 100%;
-}
-
-.search-buttons {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 6px;
 }
 
 .user-table {
@@ -649,85 +649,8 @@ export default {
 }
 
 .dialog-footer {
-  text-align: right;
-}
-
-/* Element Plus 组件样式覆盖 */
-:deep(.el-form-item) {
-  margin-bottom: 16px;
-  width: 100%;
-}
-
-:deep(.el-form-item__label) {
-  font-weight: 500;
-  color: #333;
-  width: auto !important;
-  min-width: 80px;
-  text-align: right;
-  padding-right: 12px;
-}
-
-:deep(.el-form-item__content) {
-  flex: 1;
-}
-
-:deep(.el-input) {
-  width: 100%;
-}
-
-:deep(.el-select) {
-  width: 100%;
-}
-
-:deep(.el-table) {
-  table-layout: fixed;
-}
-
-:deep(.el-table th) {
-  background-color: #fafafa;
-  font-weight: 600;
-}
-
-:deep(.el-table td) {
-  padding: 8px 0;
-}
-
-:deep(.el-table .cell) {
-  padding: 0 8px;
-}
-
-:deep(.el-dialog__header) {
-  background-color: #f8f9fa;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-:deep(.el-dialog__title) {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-}
-
-:deep(.el-alert) {
-  border-radius: 6px;
-}
-
-/* 响应式调整 */
-@media (max-width: 1200px) {
-  .main-container {
-    flex-direction: column;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid #e8e8e8;
-  }
-
-  .role-selection {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>

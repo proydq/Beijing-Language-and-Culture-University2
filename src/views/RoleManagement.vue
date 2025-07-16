@@ -1,35 +1,9 @@
-:deep(.role-dialog .el-dialog) {
-  height: 700px;
-}
-
-:deep(.role-dialog .el-dialog__body) {
-  padding: 20px 24px;
-  height: calc(100% - 140px);
-}
-
-:deep(.el-tree-node__content) {
-  height: 32px;
-  line-height: 32px;
-}
-
-:deep(.el-tree-node__expand-icon) {
-  color: #666;
-}
-
-:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
-  background-color: #4A90E2;
-  border-color: #4A90E2;
-}
-
-:deep(.el-checkbox__input.is-indeterminate .el-checkbox__inner) {
-  background-color: #4A90E2;
-  border-color: #4A90E2;
-}<template>
+<template>
   <div class="role-management">
     <!-- 顶部导航栏 -->
     <div class="header">
       <div class="header-left">
-        <div class="logo">
+        <div class="logo" @click="goToHome" style="cursor: pointer;">
           <el-icon size="24"><home-filled /></el-icon>
         </div>
         <span class="title">功能模块</span>
@@ -50,6 +24,11 @@
     <div class="main-container">
       <!-- 左侧导航 -->
       <div class="sidebar">
+        <!-- 添加首页导航 -->
+        <div class="nav-item" @click="goToHome">
+          <el-icon><home /></el-icon>
+          <span>首页</span>
+        </div>
         <div class="nav-item active">
           <span>角色管理</span>
         </div>
@@ -60,6 +39,15 @@
 
       <!-- 右侧主内容 -->
       <div class="main-content">
+        <!-- 面包屑导航 -->
+        <div class="breadcrumb">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item @click="goToHome" style="cursor: pointer; color: #4A90E2;">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>权限管理</el-breadcrumb-item>
+            <el-breadcrumb-item>角色管理</el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
+
         <!-- 标签页 -->
         <el-tabs v-model="activeTab" class="tabs">
           <el-tab-pane label="权限管理" name="role"></el-tab-pane>
@@ -117,72 +105,43 @@
       v-model="dialogVisible"
       :title="isEdit ? '编辑角色' : '添加角色'"
       width="800px"
-      :before-close="handleDialogClose"
       class="role-dialog"
+      @close="handleDialogClose"
     >
-      <div class="role-form-container">
-        <!-- 基本信息表单 -->
-        <div class="basic-info-section">
-          <el-form
-            ref="formRef"
-            :model="roleForm"
-            :rules="roleRules"
-            label-width="100px"
-            class="role-form"
-          >
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <el-form-item label="角色名称:" prop="roleName">
-                  <el-input v-model="roleForm.roleName" placeholder="请输入角色名称" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="角色描述:" prop="roleDesc">
-                  <el-input v-model="roleForm.roleDesc" placeholder="请输入角色描述" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </el-form>
-
-          <div class="action-buttons">
-            <el-button type="primary" @click="handleSaveRole">PC后台设置</el-button>
-            <el-button @click="handleMobileSettings">移动端</el-button>
-          </div>
-        </div>
-
-        <!-- 权限目录树 -->
-        <div class="permission-tree-section">
-          <div class="tree-container">
+      <el-form ref="formRef" :model="roleForm" :rules="roleRules" label-width="100px">
+        <el-form-item label="角色名称:" prop="roleName">
+          <el-input v-model="roleForm.roleName" placeholder="请输入角色名称" />
+        </el-form-item>
+        
+        <el-form-item label="角色描述:" prop="roleDesc">
+          <el-input 
+            v-model="roleForm.roleDesc" 
+            type="textarea" 
+            :rows="3"
+            placeholder="请输入角色描述" 
+          />
+        </el-form-item>
+        
+        <el-form-item label="权限设置:">
+          <div class="permission-tree">
             <el-tree
               ref="permissionTreeRef"
               :data="permissionTreeData"
               :props="treeProps"
-              node-key="id"
               show-checkbox
-              check-strictly
-              default-expand-all
+              node-key="id"
               :default-checked-keys="checkedPermissions"
               @check="handlePermissionCheck"
-              class="permission-tree"
             >
               <template #default="{ node, data }">
-                <span class="tree-node-content">
-                  <el-icon v-if="data.type === 'module'" class="tree-icon module-icon">
-                    <folder />
-                  </el-icon>
-                  <el-icon v-else-if="data.type === 'page'" class="tree-icon page-icon">
-                    <document />
-                  </el-icon>
-                  <el-icon v-else class="tree-icon action-icon">
-                    <operation />
-                  </el-icon>
+                <span class="tree-node">
                   <span class="node-label">{{ node.label }}</span>
                 </span>
               </template>
             </el-tree>
           </div>
-        </div>
-      </div>
+        </el-form-item>
+      </el-form>
 
       <template #footer>
         <div class="dialog-footer">
@@ -298,20 +257,6 @@ export default {
       ]
     }
 
-    // 模块选项
-    const moduleOptions = ref([
-      { label: '所有', value: 'all' },
-      { label: '会议模块', value: 'meeting' },
-      { label: '互动模块', value: 'interaction' },
-      { label: '门禁模块', value: 'access' },
-      { label: '媒体资源', value: 'media' },
-      { label: '电子纸模块', value: 'epaper' },
-      { label: '用户管理', value: 'user' },
-      { label: '房屋管理', value: 'house' },
-      { label: '组织架构', value: 'organization' },
-      { label: '职务职级', value: 'position' }
-    ])
-
     // 角色数据
     const roleTableData = ref([
       {
@@ -358,6 +303,15 @@ export default {
       }
     ])
 
+    // 返回首页
+    const goToHome = () => {
+      router.push('/dashboard')
+    }
+
+    const goToAdminManagement = () => {
+      router.push('/admin-management')
+    }
+
     const handleAddRole = () => {
       isEdit.value = false
       resetForm()
@@ -376,14 +330,6 @@ export default {
       // 设置已选择的权限
       checkedPermissions.value = ['today-view', 'today-edit', 'diagnosis'] // 示例选中项
       dialogVisible.value = true
-    }
-
-    const handleSaveRole = () => {
-      console.log('PC后台设置')
-    }
-
-    const handleMobileSettings = () => {
-      console.log('移动端设置')
     }
 
     const handlePermissionCheck = (data, checked) => {
@@ -442,7 +388,6 @@ export default {
         
         // 获取选中的权限
         const selectedPermissions = permissionTreeRef.value.getCheckedKeys()
-        const halfCheckedPermissions = permissionTreeRef.value.getHalfCheckedKeys()
         
         if (isEdit.value) {
           // 编辑角色
@@ -476,10 +421,6 @@ export default {
       }
     }
 
-    const goToAdminManagement = () => {
-      router.push('/admin-management')
-    }
-
     return {
       activeTab,
       formRef,
@@ -493,6 +434,8 @@ export default {
       permissionTreeData,
       treeProps,
       checkedPermissions,
+      goToHome,  // 新增返回首页方法
+      goToAdminManagement,
       handleAddRole,
       handleEditRole,
       handleDeleteRole,
@@ -500,10 +443,7 @@ export default {
       handleCurrentChange,
       handleDialogClose,
       handleSubmit,
-      handleSaveRole,
-      handleMobileSettings,
-      handlePermissionCheck,
-      goToAdminManagement
+      handlePermissionCheck
     }
   }
 }
@@ -540,6 +480,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.2s;
+}
+
+.logo:hover {
+  transform: scale(1.05);
 }
 
 .title {
@@ -600,6 +545,9 @@ export default {
   margin-bottom: 8px;
   transition: all 0.3s;
   color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .nav-item:hover {
@@ -618,6 +566,19 @@ export default {
   overflow-y: auto;
 }
 
+.breadcrumb {
+  margin-bottom: 20px;
+  padding: 15px 0;
+}
+
+.breadcrumb :deep(.el-breadcrumb__item:not(:last-child)) {
+  cursor: pointer;
+}
+
+.breadcrumb :deep(.el-breadcrumb__item:not(:last-child):hover) {
+  color: #357ABD;
+}
+
 .tabs {
   margin-bottom: 20px;
 }
@@ -626,7 +587,7 @@ export default {
   background: white;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .content-header {
@@ -637,10 +598,10 @@ export default {
 }
 
 .content-title {
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
   color: #333;
-  margin: 0;
 }
 
 .role-table {
@@ -649,165 +610,60 @@ export default {
 
 .pagination-area {
   display: flex;
-  justify-content: center;
-}
-
-.role-form-container {
-  display: flex;
-  flex-direction: column;
-  height: 600px;
-}
-
-.basic-info-section {
-  margin-bottom: 20px;
-  padding-top: 20px;
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 15px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #f0f0f0;
-}
-
-.role-form {
-  margin-bottom: 20px;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.permission-tree-section {
-  flex: 1;
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.tree-container {
-  height: 100%;
-  overflow-y: auto;
-  padding: 15px;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 
 .permission-tree {
-  height: 100%;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  padding: 10px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
-.tree-node-content {
+.tree-node {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.tree-icon {
-  font-size: 16px;
-}
-
-.module-icon {
-  color: #4A90E2;
-}
-
-.page-icon {
-  color: #67C23A;
-}
-
-.action-icon {
-  color: #E6A23C;
-}
-
 .node-label {
   font-size: 14px;
-  color: #333;
-}
-
-.module-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  width: 100%;
-}
-
-.module-checkbox {
-  margin-right: 0 !important;
 }
 
 .dialog-footer {
-  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
-/* Element Plus 组件样式覆盖 */
-:deep(.el-tabs__item.is-active) {
-  color: #4A90E2;
+/* 深度样式 */
+:deep(.role-dialog .el-dialog) {
+  height: 700px;
 }
 
-:deep(.el-tabs__active-bar) {
-  background-color: #4A90E2;
-}
-
-:deep(.el-table) {
-  table-layout: fixed;
-}
-
-:deep(.el-table th) {
-  background-color: #fafafa;
-  font-weight: 600;
-}
-
-:deep(.el-table td) {
-  padding: 8px 0;
-}
-
-:deep(.el-table .cell) {
-  padding: 0 8px;
-}
-
-:deep(.el-form-item) {
-  margin-bottom: 20px;
-}
-
-:deep(.el-form-item__label) {
-  font-weight: 500;
-  color: #333;
-}
-
-:deep(.el-dialog__header) {
-  background-color: #f8f9fa;
+:deep(.role-dialog .el-dialog__body) {
   padding: 20px 24px;
-  border-bottom: 1px solid #e9ecef;
+  height: calc(100% - 140px);
 }
 
-:deep(.el-dialog__title) {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
+:deep(.el-tree-node__content) {
+  height: 32px;
+  line-height: 32px;
 }
 
-/* 响应式调整 */
-@media (max-width: 1200px) {
-  .main-container {
-    flex-direction: column;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid #e8e8e8;
-  }
-  
-  .module-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+:deep(.el-tree-node__expand-icon) {
+  color: #666;
 }
 
-@media (max-width: 768px) {
-  .module-grid {
-    grid-template-columns: 1fr;
-  }
+:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #4A90E2;
+  border-color: #4A90E2;
+}
+
+:deep(.el-checkbox__input.is-indeterminate .el-checkbox__inner) {
+  background-color: #4A90E2;
+  border-color: #4A90E2;
 }
 </style>

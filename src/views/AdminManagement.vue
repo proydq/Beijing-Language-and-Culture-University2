@@ -3,7 +3,7 @@
     <!-- 顶部导航栏 -->
     <div class="header">
       <div class="header-left">
-        <div class="logo">
+        <div class="logo" @click="goToHome" style="cursor: pointer;">
           <el-icon size="24"><home-filled /></el-icon>
         </div>
         <span class="title">功能模块</span>
@@ -24,6 +24,11 @@
     <div class="main-container">
       <!-- 左侧导航 -->
       <div class="sidebar">
+        <!-- 添加首页导航 -->
+        <div class="nav-item" @click="goToHome">
+          <el-icon><home /></el-icon>
+          <span>首页</span>
+        </div>
         <div class="nav-item" @click="goToRoleManagement">
           <span>角色管理</span>
         </div>
@@ -34,6 +39,15 @@
 
       <!-- 右侧主内容 -->
       <div class="main-content">
+        <!-- 面包屑导航 -->
+        <div class="breadcrumb">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item @click="goToHome" style="cursor: pointer; color: #4A90E2;">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>权限管理</el-breadcrumb-item>
+            <el-breadcrumb-item>管理员设置</el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
+
         <!-- 标签页 - 只保留权限管理 -->
         <el-tabs v-model="activeTab" class="tabs">
           <el-tab-pane label="权限管理" name="admin"></el-tab-pane>
@@ -92,36 +106,28 @@
             <el-button type="primary" @click="handleAddAdmin">添加管理员</el-button>
           </div>
 
-          <!-- 管理员表格 - 调整宽度解决空白问题 -->
+          <!-- 管理员表格 -->
           <div class="admin-table">
             <el-table :data="adminTableData" style="width: 100%" stripe>
-              <el-table-column prop="id" label="序号" width="60" />
-              <el-table-column label="头像" width="80" align="center">
-                <template #default>
-                  <el-avatar :size="40" :icon="UserFilled" />
-                </template>
-              </el-table-column>
-              <el-table-column prop="name" label="姓名" width="80" />
-              <el-table-column prop="gender" label="性别" width="60" />
-              <el-table-column prop="phone" label="手机号" width="120" />
-              <el-table-column prop="department" label="所属部门" min-width="100" />
-              <el-table-column prop="roleColor" label="所属角色" width="140">
+              <el-table-column prop="name" label="姓名" width="100" />
+              <el-table-column prop="gender" label="性别" width="80" />
+              <el-table-column prop="phone" label="手机号" width="130" />
+              <el-table-column prop="department" label="所属部门" width="120" />
+              <el-table-column label="所属角色" width="150">
                 <template #default="scope">
-                  <el-tag 
-                    :color="scope.row.roleColor" 
-                    style="color: white; border: none;"
-                  >
+                  <el-tag :color="scope.row.roleColor" effect="dark" style="color: white;">
                     {{ scope.row.roleName }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="accountNumber" label="后台登录账号" width="120" />
-              <el-table-column prop="addTime" label="添加时间" width="100" />
-              <el-table-column prop="loginStrategy" label="微信策略" width="100" />
-              <el-table-column prop="wechatPhone" label="微信绑定手机号" width="130" />
-              <el-table-column prop="wechatBindTime" label="微信绑定时间" width="120" />
-              <el-table-column label="操作" width="160" fixed="right">
+              <el-table-column prop="accountNumber" label="后台登录账号" width="150" />
+              <el-table-column prop="addTime" label="添加时间" width="120" />
+              <el-table-column prop="loginStrategy" label="登录策略" width="120" />
+              <el-table-column prop="wechatPhone" label="微信绑定手机" width="130" />
+              <el-table-column prop="wechatBindTime" label="微信绑定时间" width="130" />
+              <el-table-column label="操作" width="200">
                 <template #default="scope">
+                  <el-button type="primary" size="small" @click="handleEditAdmin(scope.row)">编辑</el-button>
                   <el-button 
                     :type="scope.row.status === 'disabled' ? 'success' : 'danger'" 
                     size="small" 
@@ -129,41 +135,35 @@
                   >
                     {{ scope.row.status === 'disabled' ? '解除禁用' : '删除' }}
                   </el-button>
-                  <el-button type="warning" size="small" @click="handleEditAdmin(scope.row)">禁用</el-button>
                 </template>
               </el-table-column>
             </el-table>
-          </div>
 
-          <!-- 分页 -->
-          <div class="pagination-area">
-            <el-pagination
-              v-model:current-page="pagination.currentPage"
-              v-model:page-size="pagination.pageSize"
-              :page-sizes="[10, 20, 50, 100]"
-              :total="pagination.total"
-              layout="total, sizes, prev, pager, next, jumper"
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
-            />
+            <!-- 分页 -->
+            <div class="pagination">
+              <el-pagination
+                v-model:current-page="pagination.currentPage"
+                v-model:page-size="pagination.pageSize"
+                :page-sizes="[10, 20, 50, 100]"
+                :total="pagination.total"
+                layout="total, sizes, prev, pager, next, jumper"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+              />
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 编辑管理员弹窗 -->
+    <!-- 管理员编辑弹窗 -->
     <el-dialog
       v-model="adminDialogVisible"
-      title="编辑管理员"
-      width="600px"
-      :before-close="handleAdminDialogClose"
+      :title="isEditAdmin ? '编辑管理员' : '添加管理员'"
+      width="500px"
+      @close="handleAdminDialogClose"
     >
-      <el-form
-        ref="adminFormRef"
-        :model="adminForm"
-        :rules="adminRules"
-        label-width="120px"
-      >
+      <el-form ref="adminFormRef" :model="adminForm" :rules="adminRules" label-width="120px">
         <el-form-item label="管理员姓名:" prop="name">
           <el-input v-model="adminForm.name" placeholder="请输入管理员姓名" />
         </el-form-item>
@@ -331,6 +331,11 @@ export default {
       }
     ])
 
+    // 返回首页
+    const goToHome = () => {
+      router.push('/dashboard')
+    }
+
     const goToRoleManagement = () => {
       router.push('/role-management')
     }
@@ -369,56 +374,57 @@ export default {
       const actionType = row.status === 'disabled' ? 'success' : 'warning'
       
       ElMessageBox.confirm(
-        `确定要${action}管理员 "${row.name}" 吗？`,
-        `确认${action}`,
+        `确认要${action}管理员"${row.name}"吗？`,
+        '提示',
         {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: actionType,
         }
       ).then(() => {
-        if (row.status === 'disabled') {
-          row.status = 'normal'
-          ElMessage.success('解除禁用成功')
-        } else {
-          const index = adminTableData.value.findIndex(item => item.id === row.id)
-          if (index !== -1) {
-            adminTableData.value.splice(index, 1)
-            pagination.total -= 1
-          }
-          ElMessage.success('删除成功')
-        }
+        // 切换状态
+        row.status = row.status === 'disabled' ? 'normal' : 'disabled'
+        ElMessage.success(`${action}成功`)
       }).catch(() => {
-        ElMessage.info(`已取消${action}`)
+        // 取消操作
       })
     }
 
-    const handleSizeChange = (size) => {
-      pagination.pageSize = size
+    const handleSizeChange = (val) => {
+      pagination.pageSize = val
+      pagination.currentPage = 1
     }
 
-    const handleCurrentChange = (page) => {
-      pagination.currentPage = page
-    }
-
-    const resetAdminForm = () => {
-      adminForm.name = ''
-      adminForm.gender = ''
-      adminForm.phone = ''
-      adminForm.department = ''
-      adminForm.roleId = ''
-      adminForm.accountNumber = ''
+    const handleCurrentChange = (val) => {
+      pagination.currentPage = val
     }
 
     const handleAdminDialogClose = () => {
       adminDialogVisible.value = false
-      resetAdminForm()
+      isEditAdmin.value = false
+      currentAdminData.value = {}
+      
+      // 重置表单
+      Object.assign(adminForm, {
+        name: '',
+        gender: '',
+        phone: '',
+        department: '',
+        roleId: '',
+        accountNumber: ''
+      })
+      
+      // 清除表单验证
+      if (adminFormRef.value) {
+        adminFormRef.value.clearValidate()
+      }
     }
 
     const handleAdminSubmit = async () => {
       try {
         await adminFormRef.value.validate()
         
+        // 角色映射
         const roleMap = {
           '1': { name: '默认超级管理员', color: '#ff0000' },
           '2': { name: '会议系统管理员', color: '#ff9900' },
@@ -459,6 +465,7 @@ export default {
       adminRules,
       adminTableData,
       UserFilled,
+      goToHome,  // 新增返回首页方法
       goToRoleManagement,
       handleSearch,
       handleReset,
@@ -505,6 +512,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.2s;
+}
+
+.logo:hover {
+  transform: scale(1.05);
 }
 
 .title {
@@ -565,6 +577,9 @@ export default {
   margin-bottom: 8px;
   transition: all 0.3s;
   color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .nav-item:hover {
@@ -583,6 +598,19 @@ export default {
   overflow-y: auto;
 }
 
+.breadcrumb {
+  margin-bottom: 20px;
+  padding: 15px 0;
+}
+
+.breadcrumb :deep(.el-breadcrumb__item:not(:last-child)) {
+  cursor: pointer;
+}
+
+.breadcrumb :deep(.el-breadcrumb__item:not(:last-child):hover) {
+  color: #357ABD;
+}
+
 .tabs {
   margin-bottom: 20px;
 }
@@ -592,24 +620,24 @@ export default {
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.search-form {
-  width: 100%;
+.search-form :deep(.el-form-item__label) {
+  font-weight: 500;
+  color: #333;
 }
 
 .search-buttons {
   display: flex;
   gap: 10px;
-  align-items: center;
 }
 
 .admin-content {
   background: white;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .content-header {
@@ -620,100 +648,25 @@ export default {
 }
 
 .content-title {
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
   color: #333;
-  margin: 0;
 }
 
 .admin-table {
-  margin-bottom: 20px;
+  margin-top: 20px;
 }
 
-.pagination-area {
+.pagination {
+  margin-top: 20px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .dialog-footer {
-  text-align: right;
-}
-
-/* Element Plus 组件样式覆盖 */
-:deep(.el-tabs__item.is-active) {
-  color: #4A90E2;
-}
-
-:deep(.el-tabs__active-bar) {
-  background-color: #4A90E2;
-}
-
-:deep(.el-form-item) {
-  margin-bottom: 16px;
-  width: 100%;
-}
-
-:deep(.el-form-item__label) {
-  font-weight: 500;
-  color: #333;
-  width: auto !important;
-  min-width: 100px;
-  text-align: right;
-  padding-right: 12px;
-}
-
-:deep(.el-form-item__content) {
-  flex: 1;
-}
-
-:deep(.el-input) {
-  width: 100%;
-}
-
-:deep(.el-select) {
-  width: 100%;
-}
-
-:deep(.el-table) {
-  table-layout: fixed;
-}
-
-:deep(.el-table th) {
-  background-color: #fafafa;
-  font-weight: 600;
-}
-
-:deep(.el-table td) {
-  padding: 8px 0;
-}
-
-:deep(.el-table .cell) {
-  padding: 0 8px;
-}
-
-:deep(.el-dialog__header) {
-  background-color: #f8f9fa;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-:deep(.el-dialog__title) {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-}
-
-/* 响应式调整 */
-@media (max-width: 1200px) {
-  .main-container {
-    flex-direction: column;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid #e8e8e8;
-  }
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>
