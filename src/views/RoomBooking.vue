@@ -6,63 +6,70 @@
         <div class="logo">
           <el-icon size="24"><home-filled /></el-icon>
         </div>
-        <span class="title">房间预订系统</span>
+        <span class="title">房屋借用管理</span>
       </div>
       <div class="header-right">
         <div class="avatar">
           <el-icon size="20"><user /></el-icon>
         </div>
-        <span class="username">管理员</span>
+        <span class="username">系统管理员</span>
         <el-dropdown>
           <span class="dropdown-link">
             <el-icon><grid /></el-icon>
           </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item>个人中心</el-dropdown-item>
+              <el-dropdown-item>退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
         </el-dropdown>
       </div>
     </div>
 
-    <!-- 主内容区域 -->
-    <div class="main-content">
-      <!-- 标签页导航 -->
-      <div class="tabs">
-        <div
-          v-for="tab in tabs"
-          :key="tab"
-          :class="['tab-item', { active: activeTab === tab }]"
-          @click="setActiveTab(tab)"
+    <!-- 主导航菜单 -->
+    <div class="main-nav">
+      <div class="nav-tabs">
+        <div 
+          v-for="tab in mainTabs" 
+          :key="tab.key"
+          :class="['nav-tab', { active: activeMainTab === tab.key }]"
+          @click="setActiveMainTab(tab.key)"
         >
-          {{ tab }}
+          <el-icon>
+            <component :is="tab.icon" />
+          </el-icon>
+          <span>{{ tab.label }}</span>
         </div>
       </div>
+    </div>
 
+    <div class="main-content">
       <!-- 数据看板 -->
-      <div v-if="activeTab === '数据看板'" class="dashboard-content">
-        <!-- 使用新的完整仪表盘组件 -->
+      <div v-if="activeMainTab === 'dashboard'" class="dashboard-content">
         <DashboardStats 
-          :stats="stats" 
+          :stats="stats"
           @time-range-change="handleTimeRangeChange"
         />
       </div>
 
       <!-- 借用管理 -->
-      <div v-if="activeTab === '借用管理'" class="booking-management">
+      <div v-else-if="activeMainTab === 'booking'" class="booking-management">
         <div class="booking-layout">
           <!-- 左侧功能菜单 -->
           <div class="left-sidebar">
             <div class="sidebar-header">
-              <h3>借用管理</h3>
+              <h3>功能菜单</h3>
             </div>
             <div class="sidebar-menu">
-              <div
-                v-for="menuItem in menuItems"
-                :key="menuItem"
-                :class="['menu-item', { active: activeMenuItem === menuItem }]"
-                @click="setActiveMenuItem(menuItem)"
+              <div 
+                v-for="item in menuItems" 
+                :key="item"
+                :class="['menu-item', { active: activeMenuItem === item }]"
+                @click="setActiveMenuItem(item)"
               >
-                <el-icon v-if="menuItem === '我的预约'"><calendar /></el-icon>
-                <el-icon v-if="menuItem === '全部借用'"><list /></el-icon>
-                <el-icon v-if="menuItem === '房间预约'"><grid /></el-icon>
-                {{ menuItem }}
+                <el-icon><document /></el-icon>
+                <span>{{ item }}</span>
               </div>
             </div>
           </div>
@@ -72,41 +79,31 @@
             <div class="search-box">
               <el-input
                 v-model="searchKeyword"
-                placeholder="搜索房间"
+                placeholder="搜索楼宇"
                 :prefix-icon="Search"
-                clearable
+                size="small"
               />
             </div>
             <div class="category-tree">
-              <div class="category-group">
-                <div
-                  :class="['category-item', { active: activeCategory === '全部' }]"
-                  @click="setActiveCategory('全部')"
-                >
-                  <el-icon><home /></el-icon>
-                  全部
-                </div>
+              <div class="category-item" 
+                   :class="{ active: activeCategory === '全部' }"
+                   @click="setActiveCategory('全部')">
+                全部
               </div>
               <div class="category-group">
-                <div
-                  :class="['category-item expandable', { active: activeCategory === '达力楼' }]"
-                  @click="toggleCategory('达力楼')"
-                >
-                  <span>
-                    <el-icon><office-building /></el-icon>
-                    达力楼
-                  </span>
+                <div class="category-item expandable" 
+                     :class="{ active: activeCategory === '达力楼' }"
+                     @click="toggleCategory('达力楼')">
+                  <span @click.stop="setActiveCategory('达力楼')">达力楼</span>
                   <el-icon :class="['expand-icon', { expanded: expandedCategories.includes('达力楼') }]">
                     <arrow-down />
                   </el-icon>
                 </div>
                 <div v-if="expandedCategories.includes('达力楼')" class="sub-categories">
-                  <div
-                    v-for="floor in floors"
-                    :key="floor"
-                    :class="['sub-category', { active: activeCategory === floor }]"
-                    @click="setActiveCategory(floor)"
-                  >
+                  <div v-for="floor in floors" :key="floor" 
+                       class="sub-category"
+                       :class="{ active: activeCategory === floor }"
+                       @click="setActiveCategory(floor)">
                     {{ floor }}
                   </div>
                 </div>
@@ -114,7 +111,6 @@
             </div>
           </div>
 
-          <!-- 右侧内容区域 -->
           <div class="room-booking-content">
             <!-- 我的预约 -->
             <div v-if="activeMenuItem === '我的预约'" class="my-bookings">
@@ -126,7 +122,7 @@
                   </div>
                   <div class="filter-item">
                     <label>审核状态</label>
-                    <el-select v-model="searchFilters.auditType" placeholder="全部">
+                    <el-select v-model="searchFilters.auditType" placeholder="请选择审核状态">
                       <el-option label="全部" value="" />
                       <el-option label="待审核" value="待审核" />
                       <el-option label="通过" value="通过" />
@@ -135,7 +131,7 @@
                   </div>
                   <div class="filter-item">
                     <label>使用状态</label>
-                    <el-select v-model="searchFilters.useStatus" placeholder="全部">
+                    <el-select v-model="searchFilters.useStatus" placeholder="请选择使用状态">
                       <el-option label="全部" value="" />
                       <el-option label="未开始" value="未开始" />
                       <el-option label="进行中" value="进行中" />
@@ -143,19 +139,13 @@
                     </el-select>
                   </div>
                   <div class="filter-item">
-                    <label>预约时间</label>
+                    <label>时间范围</label>
                     <el-date-picker
-                      v-model="searchFilters.startTime"
-                      type="datetime"
-                      placeholder="开始时间"
-                    />
-                  </div>
-                  <div class="filter-item">
-                    <label>结束时间</label>
-                    <el-date-picker
-                      v-model="searchFilters.endTime"
-                      type="datetime"
-                      placeholder="结束时间"
+                      v-model="searchFilters.timeRange"
+                      type="datetimerange"
+                      range-separator="至"
+                      start-placeholder="开始时间"
+                      end-placeholder="结束时间"
                     />
                   </div>
                   <div class="filter-actions">
@@ -169,8 +159,8 @@
                 <el-table :data="paginatedBookingData" style="width: 100%">
                   <el-table-column prop="bookingName" label="预约名称" width="200" />
                   <el-table-column prop="bookingTime" label="预约时间" width="300" />
-                  <el-table-column prop="description" label="预约说明" />
-                  <el-table-column prop="roomName" label="预约房间" width="150" />
+                  <el-table-column prop="description" label="预约说明" min-width="200" />
+                  <el-table-column prop="roomName" label="房间名称" width="150" />
                   <el-table-column prop="auditStatus" label="审核状态" width="100">
                     <template #default="scope">
                       <el-tag
@@ -191,10 +181,13 @@
                       </el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column label="操作" width="100">
+                  <el-table-column label="操作" width="150">
                     <template #default="scope">
                       <el-button type="primary" size="small" @click="handleEdit(scope.row)">
                         编辑
+                      </el-button>
+                      <el-button type="danger" size="small" @click="handleEdit(scope.row)">
+                        取消
                       </el-button>
                     </template>
                   </el-table-column>
@@ -228,7 +221,7 @@
                   </div>
                   <div class="filter-item">
                     <label>审核状态</label>
-                    <el-select v-model="allBookingFilters.auditType" placeholder="全部">
+                    <el-select v-model="allBookingFilters.auditType" placeholder="请选择审核状态">
                       <el-option label="全部" value="" />
                       <el-option label="待审核" value="待审核" />
                       <el-option label="通过" value="通过" />
@@ -237,12 +230,22 @@
                   </div>
                   <div class="filter-item">
                     <label>使用状态</label>
-                    <el-select v-model="allBookingFilters.useStatus" placeholder="全部">
+                    <el-select v-model="allBookingFilters.useStatus" placeholder="请选择使用状态">
                       <el-option label="全部" value="" />
                       <el-option label="未开始" value="未开始" />
                       <el-option label="进行中" value="进行中" />
                       <el-option label="已结束" value="已结束" />
                     </el-select>
+                  </div>
+                  <div class="filter-item">
+                    <label>时间范围</label>
+                    <el-date-picker
+                      v-model="allBookingFilters.timeRange"
+                      type="datetimerange"
+                      range-separator="至"
+                      start-placeholder="开始时间"
+                      end-placeholder="结束时间"
+                    />
                   </div>
                   <div class="filter-actions">
                     <el-button type="primary" @click="handleAllBookingSearch">搜索</el-button>
@@ -256,8 +259,8 @@
                   <el-table-column prop="bookingName" label="预约名称" width="200" />
                   <el-table-column prop="applicant" label="申请人" width="100" />
                   <el-table-column prop="bookingTime" label="预约时间" width="300" />
-                  <el-table-column prop="description" label="预约说明" />
-                  <el-table-column prop="roomName" label="预约房间" width="150" />
+                  <el-table-column prop="description" label="预约说明" min-width="200" />
+                  <el-table-column prop="roomName" label="房间名称" width="150" />
                   <el-table-column prop="auditStatus" label="审核状态" width="100">
                     <template #default="scope">
                       <el-tag
@@ -333,31 +336,81 @@
           </div>
         </div>
       </div>
+
+      <!-- 审批管理 -->
+      <div v-else-if="activeMainTab === 'approval'" class="approval-content">
+        <div class="content-placeholder">
+          <el-icon size="64"><document-checked /></el-icon>
+          <h3>审批管理</h3>
+          <p>审批管理功能正在开发中...</p>
+        </div>
+      </div>
+
+      <!-- 数据记录 -->
+      <div v-else-if="activeMainTab === 'records'" class="records-content">
+        <div class="content-placeholder">
+          <el-icon size="64"><folder-opened /></el-icon>
+          <h3>数据记录</h3>
+          <p>数据记录功能正在开发中...</p>
+        </div>
+      </div>
+
+      <!-- 设置 -->
+      <div v-else-if="activeMainTab === 'settings'" class="settings-content">
+        <div class="content-placeholder">
+          <el-icon size="64"><setting /></el-icon>
+          <h3>系统设置</h3>
+          <p>系统设置功能正在开发中...</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import { ref, computed, reactive } from 'vue'
-import { Search } from '@element-plus/icons-vue'
+import { Search, ArrowDown, Document, DocumentChecked, FolderOpened, Setting, DataLine, Management, Document as DocumentIcon, Grid, User, HomeFilled } from '@element-plus/icons-vue'
 import DashboardStats from '@/components/RoomBooking/DashboardStats.vue'
 
 export default {
   name: 'RoomBooking',
   components: {
-    DashboardStats
+    DashboardStats,
+    Search,
+    ArrowDown,
+    Document,
+    DocumentChecked,
+    FolderOpened,
+    Setting,
+    DataLine,
+    Management,
+    DocumentIcon,
+    Grid,
+    User,
+    HomeFilled
   },
   setup() {
+    // 主导航标签页
+    const mainTabs = [
+      { key: 'dashboard', label: '数据看板', icon: 'DataLine' },
+      { key: 'booking', label: '借用管理', icon: 'Management' },
+      { key: 'approval', label: '审批管理', icon: 'DocumentChecked' },
+      { key: 'records', label: '数据记录', icon: 'FolderOpened' },
+      { key: 'settings', label: '设置', icon: 'Setting' }
+    ]
+    
+    const activeMainTab = ref('dashboard')
+    
+    const setActiveMainTab = (tab) => {
+      activeMainTab.value = tab
+    }
+
     // 统计数据
     const stats = ref({
       totalBookings: 1234,
       teacherBookings: 34,
       studentBookings: 1200
     })
-    
-    // 当前激活的标签页
-    const tabs = ['数据看板', '借用管理']
-    const activeTab = ref('数据看板')
     
     // 借用管理相关
     const menuItems = ['我的预约', '全部借用', '房间预约']
@@ -373,7 +426,8 @@ export default {
       auditType: '',
       useStatus: '',
       startTime: '',
-      endTime: ''
+      endTime: '',
+      timeRange: []
     })
     
     const bookingPagination = reactive({
@@ -389,7 +443,8 @@ export default {
       auditType: '',
       useStatus: '',
       startTime: '',
-      endTime: ''
+      endTime: '',
+      timeRange: []
     })
     
     const allBookingPagination = reactive({
@@ -501,99 +556,30 @@ export default {
 
     // 计算属性
     const filteredRooms = computed(() => {
-      let filtered = rooms.value
-      
-      // 按分类筛选
-      if (activeCategory.value !== '全部') {
-        filtered = filtered.filter(room => {
-          if (activeCategory.value === '1F' || activeCategory.value === '2F' || activeCategory.value === '3F' || 
-              activeCategory.value === '4F' || activeCategory.value === '5F' || activeCategory.value === '6F' ||
-              activeCategory.value === 'B1' || activeCategory.value === 'B2') {
-            return room.floor === activeCategory.value
-          }
-          return room.building === activeCategory.value
-        })
-      }
-      
-      // 按搜索关键词筛选
-      if (searchKeyword.value) {
-        filtered = filtered.filter(room => 
-          room.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-        )
-      }
-      
-      return filtered
-    })
-
-    const filteredBookings = computed(() => {
-      let filtered = bookingData.value
-      
-      if (searchFilters.name) {
-        filtered = filtered.filter(booking => 
-          booking.bookingName.toLowerCase().includes(searchFilters.name.toLowerCase())
-        )
-      }
-      
-      if (searchFilters.auditType) {
-        filtered = filtered.filter(booking => booking.auditStatus === searchFilters.auditType)
-      }
-      
-      if (searchFilters.useStatus) {
-        filtered = filtered.filter(booking => booking.useStatus === searchFilters.useStatus)
-      }
-      
-      return filtered
+      return rooms.value.filter(room => {
+        if (activeCategory.value === '全部') return true
+        if (activeCategory.value === '达力楼') return room.building === '达力楼'
+        return room.floor === activeCategory.value
+      })
     })
 
     const paginatedBookingData = computed(() => {
       const start = (bookingPagination.currentPage - 1) * bookingPagination.pageSize
       const end = start + bookingPagination.pageSize
-      const filtered = filteredBookings.value
-      bookingPagination.total = filtered.length
-      return filtered.slice(start, end)
-    })
-
-    const filteredAllBookings = computed(() => {
-      let filtered = allBookingData.value
-      
-      if (allBookingFilters.name) {
-        filtered = filtered.filter(booking => 
-          booking.bookingName.toLowerCase().includes(allBookingFilters.name.toLowerCase())
-        )
-      }
-      
-      if (allBookingFilters.applicant) {
-        filtered = filtered.filter(booking => 
-          booking.applicant.toLowerCase().includes(allBookingFilters.applicant.toLowerCase())
-        )
-      }
-      
-      if (allBookingFilters.auditType) {
-        filtered = filtered.filter(booking => booking.auditStatus === allBookingFilters.auditType)
-      }
-      
-      if (allBookingFilters.useStatus) {
-        filtered = filtered.filter(booking => booking.useStatus === allBookingFilters.useStatus)
-      }
-      
-      return filtered
+      bookingPagination.total = bookingData.value.length
+      return bookingData.value.slice(start, end)
     })
 
     const paginatedAllBookingData = computed(() => {
       const start = (allBookingPagination.currentPage - 1) * allBookingPagination.pageSize
       const end = start + allBookingPagination.pageSize
-      const filtered = filteredAllBookings.value
-      allBookingPagination.total = filtered.length
-      return filtered.slice(start, end)
+      allBookingPagination.total = allBookingData.value.length
+      return allBookingData.value.slice(start, end)
     })
 
     // 方法
-    const setActiveTab = (tabName) => {
-      activeTab.value = tabName
-    }
-
-    const setActiveMenuItem = (menuItem) => {
-      activeMenuItem.value = menuItem
+    const setActiveMenuItem = (item) => {
+      activeMenuItem.value = item
     }
 
     const setActiveCategory = (category) => {
@@ -601,71 +587,65 @@ export default {
     }
 
     const toggleCategory = (category) => {
-      if (expandedCategories.value.includes(category)) {
-        expandedCategories.value = expandedCategories.value.filter(c => c !== category)
+      const index = expandedCategories.value.indexOf(category)
+      if (index > -1) {
+        expandedCategories.value.splice(index, 1)
       } else {
         expandedCategories.value.push(category)
       }
-      setActiveCategory(category)
     }
 
     const bookRoom = (room) => {
-      if (room.available) {
-        console.log('预约房间:', room)
-        // 这里可以添加预约逻辑
-      }
+      console.log('预约房间:', room)
     }
 
     const handleTimeRangeChange = (timeRange) => {
-      console.log('时间范围变更:', timeRange)
+      console.log('时间范围变化:', timeRange)
     }
 
     const getStatusType = (status) => {
-      switch (status) {
-        case '待审核':
-          return 'warning'
-        case '通过':
-          return 'success'
-        case '拒绝':
-          return 'danger'
-        default:
-          return ''
+      const statusMap = {
+        '待审核': 'warning',
+        '通过': 'success',
+        '拒绝': 'danger'
       }
+      return statusMap[status] || 'info'
     }
 
     const getUseStatusType = (status) => {
-      switch (status) {
-        case '未开始':
-          return 'info'
-        case '进行中':
-          return 'success'
-        case '已结束':
-          return ''
-        default:
-          return ''
+      const statusMap = {
+        '未开始': 'info',
+        '进行中': 'success',
+        '已结束': 'warning'
       }
+      return statusMap[status] || 'info'
     }
 
     const handleSearch = () => {
-      bookingPagination.currentPage = 1
+      console.log('搜索:', searchFilters)
     }
 
     const handleResetFilters = () => {
-      Object.keys(searchFilters).forEach(key => {
-        searchFilters[key] = ''
-      })
-      bookingPagination.currentPage = 1
+      searchFilters.name = ''
+      searchFilters.auditType = ''
+      searchFilters.useStatus = ''
+      searchFilters.startTime = ''
+      searchFilters.endTime = ''
+      searchFilters.timeRange = []
     }
 
     const handleAllBookingSearch = () => {
-      allBookingPagination.currentPage = 1
+      console.log('全部借用搜索:', allBookingFilters)
     }
 
     const handleResetAllBookingFilters = () => {
-      Object.keys(allBookingFilters).forEach(key => {
-        allBookingFilters[key] = ''
-      })
-      allBookingPagination.currentPage = 1
+      allBookingFilters.name = ''
+      allBookingFilters.applicant = ''
+      allBookingFilters.auditType = ''
+      allBookingFilters.useStatus = ''
+      allBookingFilters.startTime = ''
+      allBookingFilters.endTime = ''
+      allBookingFilters.timeRange = []
     }
 
     const handleEdit = (row) => {
@@ -693,9 +673,10 @@ export default {
     }
 
     return {
+      mainTabs,
+      activeMainTab,
+      setActiveMainTab,
       stats,
-      tabs,
-      activeTab,
       menuItems,
       activeMenuItem,
       activeCategory,
@@ -713,7 +694,6 @@ export default {
       paginatedBookingData,
       paginatedAllBookingData,
       Search,
-      setActiveTab,
       setActiveMenuItem,
       setActiveCategory,
       toggleCategory,
@@ -744,7 +724,7 @@ export default {
 
 .header {
   height: 60px;
-  background: #4A90E2;
+  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -756,7 +736,17 @@ export default {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .header-left .title {
@@ -770,6 +760,20 @@ export default {
   gap: 15px;
 }
 
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.username {
+  font-size: 14px;
+}
+
 .dropdown-link {
   cursor: pointer;
   padding: 5px;
@@ -781,53 +785,74 @@ export default {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.main-content {
-  padding: 20px;
-}
-
-.tabs {
-  display: flex;
+.main-nav {
   background: white;
-  border-radius: 8px 8px 0 0;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 0;
   border-bottom: 1px solid #e8e8e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.tab-item {
-  flex: 1;
-  padding: 15px 20px;
-  text-align: center;
+.nav-tabs {
+  display: flex;
+  padding: 0 20px;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 15px 25px;
   cursor: pointer;
   transition: all 0.3s;
-  background: #f5f5f5;
   color: #666;
-  border-bottom: 3px solid transparent;
   font-weight: 500;
+  border-bottom: 3px solid transparent;
+  position: relative;
 }
 
-.tab-item:hover {
-  background: #e6f3ff;
-  color: #333;
+.nav-tab:hover {
+  color: #4A90E2;
+  background-color: #f8f9fa;
 }
 
-.tab-item.active {
-  background: #4A90E2;
-  color: white;
+.nav-tab.active {
+  color: #4A90E2;
   border-bottom-color: #4A90E2;
+  background-color: #f0f7ff;
 }
 
-.dashboard-content {
+.main-content {
+  flex: 1;
+  min-height: calc(100vh - 120px);
+}
+
+/* 内容占位符样式 */
+.content-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #999;
   background: white;
-  border-radius: 0 0 8px 8px;
-  padding: 20px;
+  margin: 20px;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.content-placeholder h3 {
+  margin: 20px 0 10px 0;
+  color: #666;
+  font-size: 24px;
+}
+
+.content-placeholder p {
+  margin: 0;
+  font-size: 16px;
 }
 
 /* 借用管理页面样式 */
 .booking-management {
-  height: calc(100vh - 160px);
+  height: calc(100vh - 120px);
 }
 
 .booking-layout {
@@ -969,6 +994,11 @@ export default {
   color: #4A90E2;
 }
 
+.room-booking-content {
+  display: flex;
+  flex: 1;
+}
+
 /* 右侧房间列表 */
 .room-list {
   flex: 1;
@@ -1104,11 +1134,7 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.room-booking-content {
-  display: flex;
-  flex: 1;
-}
-
+/* 响应式设计 */
 @media (max-width: 1200px) {
   .booking-layout {
     flex-direction: column;
@@ -1138,6 +1164,16 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .nav-tabs {
+    overflow-x: auto;
+    padding: 0 10px;
+  }
+
+  .nav-tab {
+    flex-shrink: 0;
+    padding: 15px 20px;
+  }
+
   .room-grid {
     grid-template-columns: 1fr;
   }
@@ -1146,7 +1182,7 @@ export default {
     max-height: 120px;
   }
   
-  .my-bookings {
+  .my-bookings, .all-bookings {
     padding: 15px;
   }
   
