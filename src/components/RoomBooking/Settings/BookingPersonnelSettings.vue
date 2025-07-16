@@ -2,39 +2,52 @@
   <div class="setting-section">
     <div class="section-header">
       <div>
-        <h2>预约人员设置</h2>
-        <p>配置不同人员类别的预约权限和访问权限</p>
+        <h2>预约人员权限列表</h2>
       </div>
       <div class="header-actions">
         <el-button type="primary" @click="addPersonnelPermission">
-          <el-icon><plus /></el-icon>
-          新增权限
+          新增
         </el-button>
         <el-button @click="exportPersonnelList">
-          <el-icon><upload /></el-icon>
-          导出列表
+          导出
         </el-button>
       </div>
     </div>
 
     <el-table :data="personnelPermissionData" style="width: 100%" border>
-      <el-table-column prop="subject" label="人员对象" width="200" />
-      <el-table-column prop="permission" label="权限设置" min-width="300">
+      <el-table-column prop="subject" label="主题" width="200" />
+      <el-table-column prop="authorizedPersonnel" label="权限人员" min-width="300">
         <template #default="{ row }">
-          <div class="personnel-list-text">
-            <span>{{ row.permission }}</span>
-            <el-button type="primary" size="small" @click="viewPersonnelDetails(row)">查看</el-button>
+          <div class="personnel-text">
+            {{ row.authorizedPersonnel }}
+            <el-button 
+              type="text" 
+              size="small" 
+              @click="viewPersonnelDetails(row)"
+              style="color: #409EFF; margin-left: 10px;"
+            >
+              查看详情
+            </el-button>
           </div>
         </template>
       </el-table-column>
-      <el-table-column prop="accessRooms" label="可访问教室" min-width="300">
+      <el-table-column prop="bookingRooms" label="预约教室" min-width="350">
         <template #default="{ row }">
-          <div class="rooms-list-text">
-            <span>{{ row.accessRooms }}</span>
-            <el-button type="primary" size="small" @click="viewRoomDetails(row)">查看</el-button>
+          <div class="rooms-text">
+            {{ row.bookingRooms }}
+            <el-button 
+              type="text" 
+              size="small" 
+              @click="viewRoomDetails(row)"
+              style="color: #409EFF; margin-left: 10px;"
+            >
+              查看详情
+            </el-button>
           </div>
         </template>
       </el-table-column>
+      <el-table-column prop="creator" label="创建人" width="100" />
+      <el-table-column prop="createTime" label="创建时间" width="120" />
       <el-table-column label="操作" width="150">
         <template #default="{ row }">
           <el-button type="primary" size="small" @click="editPersonnelPermission(row)">编辑</el-button>
@@ -48,34 +61,27 @@
 <script>
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Upload } from '@element-plus/icons-vue'
 
 export default {
   name: 'BookingPersonnelSettings',
-  components: {
-    Plus,
-    Upload
-  },
   setup() {
-    // 预约人员权限数据
+    // 预约人员权限数据 - 根据截图的实际数据结构
     const personnelPermissionData = ref([
       {
         id: 1,
-        subject: '教师人员',
-        permission: '可预约所有教室，可查看所有预约记录，可审核学生预约',
-        accessRooms: '多媒体教室（101-105）、实验室（201-203）、会议室（301-302）'
+        subject: '物理实验室一层、二层、三层可预约人员',
+        authorizedPersonnel: '杨超；郭辉；邓伯雯；赵芳；潘欣妍；张宇；吴俊杰；刘敏；孙辉；高颖；王丽；陈杰；周琼；赵诗雅；徐赠；王宇轩；黄斯；李鸥；荣意；贾永强；张良嘉；曹明红；郑子豪......',
+        bookingRooms: '多媒体教室（101）；多媒体教室（102）；多媒体教室（103）；多媒体教室（104）；多媒体教室（105）；多媒体教室（106）；多媒体教室（107）；多媒体教室（108）；多媒体教室（109）；多媒体教室（110）......',
+        creator: '张三',
+        createTime: '2024.03.08 09:16:26'
       },
       {
         id: 2,
-        subject: '学生人员',
-        permission: '可预约指定教室，需要审核，仅可查看自己的预约记录',
-        accessRooms: '多媒体教室（101-103）、自习室（204-206）'
-      },
-      {
-        id: 3,
-        subject: '管理员',
-        permission: '可预约所有教室，可管理所有预约，可设置系统参数',
-        accessRooms: '所有教室和场所'
+        subject: '物理实验室四层可预约人员',
+        authorizedPersonnel: '杨超；郭辉；邓伯雯；赵芳；潘欣妍；',
+        bookingRooms: '清洁间',
+        creator: '张三',
+        createTime: '2024.03.08 09:16:26'
       }
     ])
 
@@ -145,30 +151,32 @@ export default {
   font-weight: 600;
 }
 
-.section-header p {
-  margin: 0;
-  color: #666;
-  font-size: 14px;
-}
-
 .header-actions {
   display: flex;
   gap: 12px;
 }
 
-.personnel-list-text,
-.rooms-list-text {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+.personnel-text,
+.rooms-text {
+  line-height: 1.5;
+  word-wrap: break-word;
+  word-break: break-all;
 }
 
-.personnel-list-text span,
-.rooms-list-text span {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* 让表格内容可以换行显示 */
+:deep(.el-table .cell) {
+  white-space: normal !important;
+  word-wrap: break-word;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+/* 调整表格行高 */
+:deep(.el-table__row) {
+  height: auto;
+}
+
+:deep(.el-table td) {
+  padding: 12px 0;
 }
 </style>

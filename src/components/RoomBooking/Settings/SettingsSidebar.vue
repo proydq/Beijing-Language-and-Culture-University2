@@ -127,7 +127,7 @@ export default {
 
     const violationSettings = [
       { key: 'violation_config', label: '违规配置', icon: 'Warning' },
-      { key: 'blacklist_management', label: '黑名单管理', icon: 'User' }
+      { key: 'blacklist', label: '黑名单管理', icon: 'User' }
     ]
 
     const toggleGroup = (groupKey) => {

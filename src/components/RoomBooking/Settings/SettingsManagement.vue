@@ -40,9 +40,15 @@
             @save-settings="handleSaveSettings"
           />
 
-          <!-- 违规配置和黑名单管理 -->
+          <!-- 违规配置 -->
           <ViolationSettings 
-            v-else-if="activeSettingType === 'violation_config' || activeSettingType === 'blacklist_management'"
+            v-else-if="activeSettingType === 'violation_config'"
+            @save-settings="handleSaveSettings"
+          />
+
+          <!-- 黑名单管理 -->
+          <BlacklistManagement 
+            v-else-if="activeSettingType === 'blacklist_management'"
             @save-settings="handleSaveSettings"
           />
 
@@ -72,6 +78,7 @@ import ContinuousBookingSettings from './ContinuousBookingSettings.vue'
 import SchemeManagement from './SchemeManagement.vue'
 import RecycleBin from './RecycleBin.vue'
 import ViolationSettings from './ViolationSettings.vue'
+import BlacklistManagement from './BlacklistManagement.vue'
 
 export default {
   name: 'SettingsManagement',
@@ -83,7 +90,8 @@ export default {
     ContinuousBookingSettings,
     SchemeManagement,
     RecycleBin,
-    ViolationSettings
+    ViolationSettings,
+    BlacklistManagement
   },
   props: {
     settingsData: {
