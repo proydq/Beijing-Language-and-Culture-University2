@@ -84,51 +84,47 @@
           <!-- 预约人员设置 -->
           <div v-if="activeSettingType === 'booking_personnel'" class="setting-section">
             <div class="section-header">
-              <h2>预约人员权限设置</h2>
-              <p>配置不同人员的预约权限和限制</p>
+              <h2>预约人员权限列表</h2>
+              <div class="header-actions">
+                <el-button type="primary" @click="addPersonnelPermission">
+                  <el-icon><plus /></el-icon>
+                  新增
+                </el-button>
+                <el-button type="success" @click="exportPersonnelList">
+                  <el-icon><upload /></el-icon>
+                  导出
+                </el-button>
+              </div>
             </div>
             
-            <div class="personnel-table">
-              <el-table :data="personnelData" style="width: 100%" border>
-                <el-table-column prop="userType" label="用户类型" width="120" />
-                <el-table-column prop="canBook" label="可预约" width="100">
-                  <template #default="{ row, $index }">
-                    <el-switch v-model="row.canBook" @change="updatePersonnelPermission($index)" />
+            <div class="personnel-list">
+              <el-table :data="personnelPermissionData" style="width: 100%" border>
+                <el-table-column prop="subject" label="主题" min-width="200" />
+                <el-table-column prop="authorizedPersonnel" label="权限人员" min-width="300">
+                  <template #default="{ row }">
+                    <div class="personnel-list-text">
+                      {{ row.authorizedPersonnel }}
+                      <el-button type="primary" link @click="viewPersonnelDetails(row)">查看详情</el-button>
+                    </div>
                   </template>
                 </el-table-column>
-                <el-table-column prop="maxAdvanceDays" label="最大提前天数" width="150">
-                  <template #default="{ row, $index }">
-                    <el-input-number 
-                      v-model="row.maxAdvanceDays" 
-                      :min="1" 
-                      :max="30"
-                      size="small"
-                      @change="updatePersonnelPermission($index)"
-                    />
+                <el-table-column prop="bookableRooms" label="预约教室" min-width="400">
+                  <template #default="{ row }">
+                    <div class="rooms-list-text">
+                      {{ row.bookableRooms }}
+                      <el-button type="primary" link @click="viewRoomDetails(row)">查看详情</el-button>
+                    </div>
                   </template>
                 </el-table-column>
-                <el-table-column prop="maxDuration" label="最大预约时长(小时)" width="180">
-                  <template #default="{ row, $index }">
-                    <el-input-number 
-                      v-model="row.maxDuration" 
-                      :min="1" 
-                      :max="24"
-                      size="small"
-                      @change="updatePersonnelPermission($index)"
-                    />
+                <el-table-column prop="creator" label="创建人" width="120" />
+                <el-table-column prop="createTime" label="创建时间" width="160" />
+                <el-table-column label="操作" width="150" fixed="right">
+                  <template #default="{ row }">
+                    <el-button type="primary" size="small" @click="editPersonnelPermission(row)">编辑</el-button>
+                    <el-button type="danger" size="small" @click="deletePersonnelPermission(row)">删除</el-button>
                   </template>
                 </el-table-column>
-                <el-table-column prop="requireApproval" label="需要审批" width="100">
-                  <template #default="{ row, $index }">
-                    <el-switch v-model="row.requireApproval" @change="updatePersonnelPermission($index)" />
-                  </template>
-                </el-table-column>
-                <el-table-column prop="description" label="备注" min-width="200" />
               </el-table>
-              <div class="table-actions">
-                <el-button type="primary" @click="savePersonnelSettings">保存设置</el-button>
-                <el-button @click="resetPersonnelSettings">重置</el-button>
-              </div>
             </div>
           </div>
 
@@ -136,64 +132,116 @@
           <div v-else-if="activeSettingType === 'booking_time_settings'" class="setting-section">
             <div class="section-header">
               <h2>预约时间设置</h2>
-              <p>配置预约时间段和时间限制规则</p>
             </div>
             
-            <el-form :model="timeSettingsForm" label-width="150px" class="setting-form">
-              <el-form-item label="工作日开始时间">
-                <el-time-picker
-                  v-model="timeSettingsForm.workdayStart"
-                  format="HH:mm"
-                  placeholder="选择开始时间"
-                />
-              </el-form-item>
-              <el-form-item label="工作日结束时间">
-                <el-time-picker
-                  v-model="timeSettingsForm.workdayEnd"
-                  format="HH:mm"
-                  placeholder="选择结束时间"
-                />
-              </el-form-item>
-              <el-form-item label="周末开始时间">
-                <el-time-picker
-                  v-model="timeSettingsForm.weekendStart"
-                  format="HH:mm"
-                  placeholder="选择开始时间"
-                />
-              </el-form-item>
-              <el-form-item label="周末结束时间">
-                <el-time-picker
-                  v-model="timeSettingsForm.weekendEnd"
-                  format="HH:mm"
-                  placeholder="选择结束时间"
-                />
-              </el-form-item>
-              <el-form-item label="最小预约时长">
-                <el-input-number 
-                  v-model="timeSettingsForm.minDuration" 
-                  :min="0.5" 
-                  :max="8"
-                  :step="0.5"
-                  :precision="1"
-                />
-                <span class="form-tip">小时</span>
-              </el-form-item>
-              <el-form-item label="时间段分割">
-                <el-select v-model="timeSettingsForm.timeSlot">
-                  <el-option label="30分钟" value="30" />
-                  <el-option label="1小时" value="60" />
-                  <el-option label="2小时" value="120" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="允许周末预约">
-                <el-switch v-model="timeSettingsForm.allowWeekend" />
-                <span class="form-tip">开启后用户可以预约周末时间</span>
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="saveTimeSettings">保存设置</el-button>
-                <el-button @click="resetTimeSettings">重置</el-button>
-              </el-form-item>
-            </el-form>
+            <!-- 选项卡切换 -->
+            <div class="time-settings-tabs">
+              <div 
+                :class="['tab-item', { active: activeTimeTab === 'continuous' }]"
+                @click="activeTimeTab = 'continuous'"
+              >
+                教室连续预约设置
+              </div>
+              <div 
+                :class="['tab-item', { active: activeTimeTab === 'advance' }]"
+                @click="activeTimeTab = 'advance'"
+              >
+                人员提前预约时间设置
+              </div>
+            </div>
+
+            <!-- 教室连续预约设置 -->
+            <div v-if="activeTimeTab === 'continuous'" class="continuous-booking-settings">
+              <div class="settings-layout-horizontal">
+                <!-- 左侧楼层筛选 -->
+                <div class="floor-filter-sidebar">
+                  <div class="search-box">
+                    <el-input
+                      v-model="floorSearchKeyword"
+                      placeholder="输入关键字全称"
+                      clearable
+                      size="small"
+                    >
+                      <template #suffix>
+                        <el-icon><search /></el-icon>
+                      </template>
+                    </el-input>
+                  </div>
+                  <div class="floor-list">
+                    <div 
+                      v-for="floor in floorOptions" 
+                      :key="floor"
+                      :class="['floor-item', { active: selectedFloor === floor }]"
+                      @click="selectedFloor = floor"
+                    >
+                      {{ floor }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 右侧主内容 -->
+                <div class="main-content-area">
+                  <!-- 提示信息 -->
+                  <div class="tips-section">
+                    <p class="tips-text">
+                      <span class="tips-label">PS：</span>
+                      <span class="tips-content">表示当前预约时，房屋连续选择天数的极限值；</span>
+                    </p>
+                    <p class="example-text">
+                      例如：设置可连续预约（16）天，可选择时间为：3月1日-3月16日，第17日是不可选择；重新预约的可选：3月17日-4月11日，4月12日不可选；
+                    </p>
+                  </div>
+
+                  <!-- 操作按钮 -->
+                  <div class="action-buttons">
+                    <el-button type="primary" @click="batchSetContinuousDays">批量设置</el-button>
+                    <el-button type="success" @click="exportContinuousSettings">导出</el-button>
+                  </div>
+
+                  <!-- 教室列表表格 -->
+                  <div class="classroom-table">
+                    <el-table :data="filteredClassrooms" style="width: 100%" border>
+                      <el-table-column type="selection" width="55" />
+                      <el-table-column prop="roomName" label="预约教室" width="200" />
+                      <el-table-column prop="roomNumber" label="房间号" width="120" />
+                      <el-table-column prop="building" label="所属楼" width="120" />
+                      <el-table-column prop="continuousDays" label="可连续预约天数" width="180">
+                        <template #default="{ row }">
+                          <span v-if="row.continuousDays === -1" class="unlimited-text">不可连续预约</span>
+                          <span v-else-if="row.continuousDays === 0" class="monthly-text">一月</span>
+                          <span v-else-if="row.continuousDays === -2" class="yearly-text">一年</span>
+                          <span v-else-if="row.continuousDays === -3" class="no-limit-text">无限制预约</span>
+                          <span v-else>{{ row.continuousDays }}</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="操作" width="120" fixed="right">
+                        <template #default="{ row }">
+                          <el-button type="primary" size="small" @click="editContinuousDays(row)">编辑</el-button>
+                        </template>
+                      </el-table-column>
+                    </el-table>
+                  </div>
+
+                  <!-- 分页 -->
+                  <div class="pagination-section">
+                    <el-pagination
+                      v-model:current-page="currentPage"
+                      v-model:page-size="pageSize"
+                      :page-sizes="[10, 20, 50, 100]"
+                      :total="totalClassrooms"
+                      layout="total, sizes, prev, pager, next, jumper"
+                      @size-change="handleSizeChange"
+                      @current-change="handleCurrentChange"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 人员提前预约时间设置 -->
+            <div v-else class="advance-booking-settings">
+              <p>人员提前预约时间设置内容（待您提供截图后补充）</p>
+            </div>
           </div>
 
           <!-- 房屋方案设置 -->
@@ -377,7 +425,7 @@
 </template>
 
 <script>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Setting, 
@@ -440,41 +488,126 @@ export default {
     ]
 
     // 表单数据
-    const personnelData = ref([
+    const personnelPermissionData = ref([
       {
-        userType: '管理员',
-        canBook: true,
-        maxAdvanceDays: 30,
-        maxDuration: 24,
-        requireApproval: false,
-        description: '拥有全部预约权限，无需审批'
+        id: 1,
+        subject: '物理实验室一层、二层、三层可预约人员',
+        authorizedPersonnel: '杨艳；郭辉；邓伯雪；赵芳；潘欣妍；张圣；吴俊怡；刘敏；孙楠；蓝阳；王丽；陈洁；周涛；赵诗雅；徐莉；王芋针；李强；宋黄；宋敬；张恩睡；雷明轩；郑子豪...',
+        bookableRooms: '多媒体教室（101）；多媒体教室（102）；多媒体教室（103）；多媒体教室（104）；多媒体教室（105）；多媒体教室（106）；多媒体教室（107）；多媒体教室（108）；多媒体教室（109）；多媒体教室（110）......',
+        creator: '张三',
+        createTime: '2024.03.08 09:16:26'
       },
       {
-        userType: '教师',
-        canBook: true,
-        maxAdvanceDays: 14,
-        maxDuration: 8,
-        requireApproval: false,
-        description: '可以预约房间，提前14天，最长8小时'
-      },
-      {
-        userType: '学生',
-        canBook: true,
-        maxAdvanceDays: 7,
-        maxDuration: 4,
-        requireApproval: true,
-        description: '可以预约房间，需要审批，最长4小时'
+        id: 2,
+        subject: '物理实验室四层可预约人员',
+        authorizedPersonnel: '杨艳；郭辉；邓伯雪；赵芳；潘欣妍；',
+        bookableRooms: '清洁间',
+        creator: '张三',
+        createTime: '2024.03.08 09:16:26'
       }
     ])
 
-    const timeSettingsForm = reactive({
-      workdayStart: '08:00',
-      workdayEnd: '18:00',
-      weekendStart: '09:00',
-      weekendEnd: '17:00',
-      minDuration: 1,
-      timeSlot: '60',
-      allowWeekend: true
+    const activeTimeTab = ref('continuous')
+    const selectedFloor = ref('全部')
+    const floorSearchKeyword = ref('')
+    const currentPage = ref(1)
+    const pageSize = ref(10)
+    const totalClassrooms = ref(2010)
+
+    const floorOptions = ['全部', '达才楼', 'B2', 'B1', '1F', '2F', '3F', '4F', '5F', '6F', '成凳楼', '富行楼', '博雅楼']
+
+    const classroomsData = ref([
+      {
+        id: 1,
+        roomName: '多媒体教室（101）',
+        roomNumber: '101',
+        building: '科研楼',
+        continuousDays: 16
+      },
+      {
+        id: 2,
+        roomName: '多媒体教室（102）',
+        roomNumber: '102',
+        building: '科研楼',
+        continuousDays: 16
+      },
+      {
+        id: 3,
+        roomName: '多媒体教室（103）',
+        roomNumber: '103',
+        building: '科研楼',
+        continuousDays: 16
+      },
+      {
+        id: 4,
+        roomName: '多媒体教室（104）',
+        roomNumber: '104',
+        building: '科研楼',
+        continuousDays: 16
+      },
+      {
+        id: 5,
+        roomName: '多媒体教室（105）',
+        roomNumber: '105',
+        building: '科研楼',
+        continuousDays: -1
+      },
+      {
+        id: 6,
+        roomName: '多媒体教室（106）',
+        roomNumber: '106',
+        building: '科研楼',
+        continuousDays: 0
+      },
+      {
+        id: 7,
+        roomName: '多媒体教室（107）',
+        roomNumber: '107',
+        building: '科研楼',
+        continuousDays: -2
+      },
+      {
+        id: 8,
+        roomName: '多媒体教室（108）',
+        roomNumber: '108',
+        building: '科研楼',
+        continuousDays: 45
+      },
+      {
+        id: 9,
+        roomName: '多媒体教室（109）',
+        roomNumber: '109',
+        building: '科研楼',
+        continuousDays: 16
+      },
+      {
+        id: 10,
+        roomName: '多媒体教室（110）',
+        roomNumber: '110',
+        building: '科研楼',
+        continuousDays: -3
+      }
+    ])
+
+    // 计算属性
+    const filteredClassrooms = computed(() => {
+      let data = classroomsData.value
+      
+      // 根据楼层筛选
+      if (selectedFloor.value !== '全部') {
+        data = data.filter(item => item.building === selectedFloor.value)
+      }
+      
+      // 根据搜索关键词筛选
+      if (floorSearchKeyword.value) {
+        data = data.filter(item =>
+          item.roomName.includes(floorSearchKeyword.value) ||
+          item.roomNumber.includes(floorSearchKeyword.value) ||
+          item.building.includes(floorSearchKeyword.value)
+        )
+      }
+      
+      return data
     })
 
     const schemeData = ref([
@@ -557,35 +690,54 @@ export default {
       activeSettingType.value = type
     }
 
-    const updatePersonnelPermission = (index) => {
-      ElMessage.success('权限设置已更新')
+    const addPersonnelPermission = () => {
+      ElMessage.info('新增预约人员权限功能开发中...')
     }
 
-    const savePersonnelSettings = () => {
-      emit('save-settings', { type: 'booking_personnel', data: personnelData.value })
-      ElMessage.success('预约人员设置保存成功')
+    const exportPersonnelList = () => {
+      ElMessage.success('正在导出预约人员列表...')
     }
 
-    const resetPersonnelSettings = () => {
-      ElMessage.info('预约人员设置已重置')
+    const viewPersonnelDetails = (row) => {
+      ElMessage.info(`查看人员详情: ${row.subject}`)
     }
 
-    const saveTimeSettings = () => {
-      emit('save-settings', { type: 'booking_time_settings', data: timeSettingsForm })
-      ElMessage.success('预约时间设置保存成功')
+    const viewRoomDetails = (row) => {
+      ElMessage.info(`查看房间详情: ${row.subject}`)
     }
 
-    const resetTimeSettings = () => {
-      Object.assign(timeSettingsForm, {
-        workdayStart: '08:00',
-        workdayEnd: '18:00',
-        weekendStart: '09:00',
-        weekendEnd: '17:00',
-        minDuration: 1,
-        timeSlot: '60',
-        allowWeekend: true
-      })
-      ElMessage.info('预约时间设置已重置')
+    const editPersonnelPermission = (row) => {
+      ElMessage.info(`编辑权限设置: ${row.subject}`)
+    }
+
+    const deletePersonnelPermission = async (row) => {
+      try {
+        await ElMessageBox.confirm(`确认删除"${row.subject}"的权限设置吗？`, '删除确认')
+        ElMessage.success('权限设置已删除')
+      } catch {
+        // 用户取消
+      }
+    }
+
+    const batchSetContinuousDays = () => {
+      ElMessage.info('批量设置功能开发中...')
+    }
+
+    const exportContinuousSettings = () => {
+      ElMessage.success('正在导出教室设置...')
+    }
+
+    const editContinuousDays = (row) => {
+      ElMessage.info(`编辑教室: ${row.roomName}`)
+    }
+
+    const handleSizeChange = (val) => {
+      pageSize.value = val
+      currentPage.value = 1
+    }
+
+    const handleCurrentChange = (val) => {
+      currentPage.value = val
     }
 
     const addScheme = () => {
@@ -682,19 +834,33 @@ export default {
       housePermissionSettings,
       houseManagementSettings,
       violationSettings,
-      personnelData,
-      timeSettingsForm,
+      personnelPermissionData,
+      activeTimeTab,
+      selectedFloor,
+      floorSearchKeyword,
+      currentPage,
+      pageSize,
+      totalClassrooms,
+      floorOptions,
+      classroomsData,
+      filteredClassrooms,
       schemeData,
       recycleData,
       violationForm,
       blacklistData,
       toggleGroup,
       setActiveSettingType,
-      updatePersonnelPermission,
-      savePersonnelSettings,
-      resetPersonnelSettings,
-      saveTimeSettings,
-      resetTimeSettings,
+      addPersonnelPermission,
+      exportPersonnelList,
+      viewPersonnelDetails,
+      viewRoomDetails,
+      editPersonnelPermission,
+      deletePersonnelPermission,
+      batchSetContinuousDays,
+      exportContinuousSettings,
+      editContinuousDays,
+      handleSizeChange,
+      handleCurrentChange,
       addScheme,
       importScheme,
       editScheme,
@@ -850,10 +1016,13 @@ export default {
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 1px solid #e8e8e8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .section-header h2 {
-  margin: 0 0 8px 0;
+  margin: 0;
   font-size: 20px;
   color: #333;
   font-weight: 600;
@@ -865,14 +1034,182 @@ export default {
   font-size: 14px;
 }
 
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
 .setting-form {
   max-width: 600px;
+}
+
+.personnel-list-text,
+.rooms-list-text {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.personnel-list-text span,
+.rooms-list-text span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .form-tip {
   margin-left: 10px;
   color: #999;
   font-size: 12px;
+}
+.time-settings-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.tab-item {
+  padding: 12px 24px;
+  cursor: pointer;
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-bottom: none;
+  color: #666;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.tab-item:first-child {
+  border-top-left-radius: 8px;
+}
+
+.tab-item:last-child {
+  border-top-right-radius: 8px;
+}
+
+.tab-item.active {
+  background: #4A90E2;
+  color: white;
+  border-color: #4A90E2;
+}
+
+/* 教室连续预约设置布局 */
+.settings-layout-horizontal {
+  display: flex;
+  gap: 20px;
+  min-height: 600px;
+}
+
+.floor-filter-sidebar {
+  width: 200px;
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+  height: fit-content;
+}
+
+.floor-filter-sidebar .search-box {
+  margin-bottom: 16px;
+}
+
+.floor-filter-sidebar .floor-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.floor-filter-sidebar .floor-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s;
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.floor-filter-sidebar .floor-item:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.floor-filter-sidebar .floor-item.active {
+  background: #4A90E2;
+  color: white;
+}
+
+.main-content-area {
+  flex: 1;
+}
+
+/* 提示信息 */
+.tips-section {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border-left: 4px solid #4A90E2;
+}
+
+.tips-text {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.tips-label {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.tips-content {
+  color: #333;
+}
+
+.example-text {
+  margin: 0;
+  color: #e74c3c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* 教室表格 */
+.classroom-table {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.unlimited-text {
+  color: #e74c3c;
+}
+
+.monthly-text {
+  color: #f39c12;
+}
+
+.yearly-text {
+  color: #27ae60;
+}
+
+.no-limit-text {
+  color: #27ae60;
+}
+
+/* 分页 */
+.pagination-section {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
 }
 
 .blacklist-management,
