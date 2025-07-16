@@ -551,10 +551,276 @@
 
       <!-- 设置 -->
       <div v-else-if="activeMainTab === 'settings'" class="settings-content">
-        <div class="content-placeholder">
-          <el-icon size="64"><setting /></el-icon>
-          <h3>系统设置</h3>
-          <p>系统设置功能正在开发中...</p>
+        <div class="settings-management">
+          <div class="settings-layout">
+            <!-- 左侧层级导航 -->
+            <div class="settings-sidebar">
+              <div class="sidebar-header">
+                <h3>系统设置</h3>
+              </div>
+              <div class="sidebar-menu">
+                <!-- 房屋类型权限设置 -->
+                <div class="menu-group">
+                  <div 
+                    :class="['menu-group-title', { expanded: expandedGroups.includes('房屋类型权限设置') }]"
+                    @click="toggleGroup('房屋类型权限设置')"
+                  >
+                    <el-icon><arrow-down /></el-icon>
+                    <span>房屋类型权限设置</span>
+                  </div>
+                  <div v-if="expandedGroups.includes('房屋类型权限设置')" class="submenu">
+                    <div 
+                      :class="['submenu-item', { active: activeSettingsMenu === '预约人员' }]"
+                      @click="setActiveSettingsMenu('预约人员')"
+                    >
+                      <el-icon><user /></el-icon>
+                      <span>预约人员</span>
+                    </div>
+                    <div 
+                      :class="['submenu-item', { active: activeSettingsMenu === '预约时间设置' }]"
+                      @click="setActiveSettingsMenu('预约时间设置')"
+                    >
+                      <el-icon><clock /></el-icon>
+                      <span>预约时间设置</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 房屋管理 -->
+                <div class="menu-group">
+                  <div 
+                    :class="['menu-group-title', { expanded: expandedGroups.includes('房屋管理') }]"
+                    @click="toggleGroup('房屋管理')"
+                  >
+                    <el-icon><arrow-down /></el-icon>
+                    <span>房屋管理</span>
+                  </div>
+                  <div v-if="expandedGroups.includes('房屋管理')" class="submenu">
+                    <div 
+                      :class="['submenu-item', { active: activeSettingsMenu === '房屋列表' }]"
+                      @click="setActiveSettingsMenu('房屋列表')"
+                    >
+                      <el-icon><document /></el-icon>
+                      <span>房屋列表</span>
+                    </div>
+                    <div 
+                      :class="['submenu-item', { active: activeSettingsMenu === '回收站' }]"
+                      @click="setActiveSettingsMenu('回收站')"
+                    >
+                      <el-icon><delete /></el-icon>
+                      <span>回收站</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 违规设置 -->
+                <div class="menu-group">
+                  <div 
+                    :class="['menu-group-title', { expanded: expandedGroups.includes('违规设置') }]"
+                    @click="toggleGroup('违规设置')"
+                  >
+                    <el-icon><arrow-down /></el-icon>
+                    <span>违规设置</span>
+                  </div>
+                  <div v-if="expandedGroups.includes('违规设置')" class="submenu">
+                    <div 
+                      :class="['submenu-item', { active: activeSettingsMenu === '违规配置' }]"
+                      @click="setActiveSettingsMenu('违规配置')"
+                    >
+                      <el-icon><setting /></el-icon>
+                      <span>违规配置</span>
+                    </div>
+                    <div 
+                      :class="['submenu-item', { active: activeSettingsMenu === '黑名单' }]"
+                      @click="setActiveSettingsMenu('黑名单')"
+                    >
+                      <el-icon><warning /></el-icon>
+                      <span>黑名单</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右侧主要内容区域 -->
+            <div class="settings-main-content">
+              <!-- 预约人员管理 -->
+              <div v-if="activeSettingsMenu === '预约人员'" class="settings-page">
+                <div class="page-header">
+                  <h2>预约人权限列表</h2>
+                  <div class="header-actions">
+                    <el-button type="primary">新增</el-button>
+                    <el-button>导出</el-button>
+                  </div>
+                </div>
+
+                <div class="content-table">
+                  <el-table :data="reservationPersonnel" style="width: 100%">
+                    <el-table-column prop="topic" label="主题" width="200" />
+                    <el-table-column prop="allowedPersonnel" label="权限人员" min-width="300">
+                      <template #default="scope">
+                        <div class="personnel-list">
+                          <span v-for="(person, index) in scope.row.allowedPersonnel" :key="index" class="person-tag">
+                            {{ person }}
+                          </span>
+                          <el-button type="primary" link size="small" @click="viewMore(scope.row)">
+                            查看详情
+                          </el-button>
+                        </div>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="classrooms" label="预约教室" min-width="300">
+                      <template #default="scope">
+                        <div class="classroom-list">
+                          <span v-for="(classroom, index) in scope.row.classrooms" :key="index" class="classroom-tag">
+                            {{ classroom }}
+                          </span>
+                          <el-button type="primary" link size="small" @click="viewMore(scope.row)">
+                            查看详情
+                          </el-button>
+                        </div>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="creator" label="创建人" width="100" />
+                    <el-table-column prop="createTime" label="创建时间" width="160" />
+                    <el-table-column label="操作" width="160">
+                      <template #default="scope">
+                        <el-button type="primary" size="small" @click="editItem(scope.row)">
+                          编辑
+                        </el-button>
+                        <el-button type="danger" size="small" @click="deleteItem(scope.row)">
+                          删除
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+              </div>
+
+              <!-- 预约时间设置 -->
+              <div v-else-if="activeSettingsMenu === '预约时间设置'" class="settings-page">
+                <div class="page-header">
+                  <h2>预约时间设置</h2>
+                  <div class="header-actions">
+                    <el-button type="primary">保存设置</el-button>
+                  </div>
+                </div>
+
+                <div class="settings-form">
+                  <el-form :model="timeSettings" label-width="150px">
+                    <el-form-item label="预约开放时间：">
+                      <el-time-picker
+                        v-model="timeSettings.openTime"
+                        placeholder="选择开放时间"
+                      />
+                      <span class="form-desc">设置每日预约系统开放时间</span>
+                    </el-form-item>
+                    
+                    <el-form-item label="预约截止时间：">
+                      <el-time-picker
+                        v-model="timeSettings.closeTime"
+                        placeholder="选择截止时间"
+                      />
+                      <span class="form-desc">设置每日预约系统关闭时间</span>
+                    </el-form-item>
+
+                    <el-form-item label="提前预约天数：">
+                      <el-input-number
+                        v-model="timeSettings.advanceDays"
+                        :min="1"
+                        :max="30"
+                        style="width: 200px;"
+                      />
+                      <span class="form-desc">用户最多可提前多少天进行预约</span>
+                    </el-form-item>
+
+                    <el-form-item label="取消预约时限：">
+                      <el-input-number
+                        v-model="timeSettings.cancelHours"
+                        :min="1"
+                        :max="48"
+                        style="width: 200px;"
+                      />
+                      <span class="form-desc">预约开始前多少小时内不允许取消</span>
+                    </el-form-item>
+                  </el-form>
+                </div>
+              </div>
+
+              <!-- 房屋列表 -->
+              <div v-else-if="activeSettingsMenu === '房屋列表'" class="settings-page">
+                <div class="page-header">
+                  <h2>房屋列表管理</h2>
+                  <div class="header-actions">
+                    <el-button type="primary">添加房屋</el-button>
+                  </div>
+                </div>
+
+                <div class="content-placeholder">
+                  <el-icon size="64"><document /></el-icon>
+                  <h3>房屋列表管理</h3>
+                  <p>此功能正在开发中，敬请期待...</p>
+                </div>
+              </div>
+
+              <!-- 回收站 -->
+              <div v-else-if="activeSettingsMenu === '回收站'" class="settings-page">
+                <div class="page-header">
+                  <h2>回收站</h2>
+                  <div class="header-actions">
+                    <el-button type="danger">清空回收站</el-button>
+                  </div>
+                </div>
+
+                <div class="content-placeholder">
+                  <el-icon size="64"><delete /></el-icon>
+                  <h3>回收站</h3>
+                  <p>此功能正在开发中，敬请期待...</p>
+                </div>
+              </div>
+
+              <!-- 违规配置 -->
+              <div v-else-if="activeSettingsMenu === '违规配置'" class="settings-page">
+                <div class="page-header">
+                  <h2>违规配置管理</h2>
+                  <div class="header-actions">
+                    <el-button type="primary">保存配置</el-button>
+                  </div>
+                </div>
+
+                <div class="content-placeholder">
+                  <el-icon size="64"><setting /></el-icon>
+                  <h3>违规配置管理</h3>
+                  <p>此功能正在开发中，敬请期待...</p>
+                </div>
+              </div>
+
+              <!-- 黑名单 -->
+              <div v-else-if="activeSettingsMenu === '黑名单'" class="settings-page">
+                <div class="page-header">
+                  <h2>黑名单管理</h2>
+                  <div class="header-actions">
+                    <el-button type="primary">添加黑名单</el-button>
+                  </div>
+                </div>
+
+                <div class="content-placeholder">
+                  <el-icon size="64"><warning /></el-icon>
+                  <h3>黑名单管理</h3>
+                  <p>此功能正在开发中，敬请期待...</p>
+                </div>
+              </div>
+
+              <!-- 默认页面 -->
+              <div v-else class="settings-page">
+                <div class="content-placeholder">
+                  <el-icon size="64"><setting /></el-icon>
+                  <h3>请选择设置项</h3>
+                  <p>请从左侧菜单选择要配置的功能模块</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -564,7 +830,7 @@
 <script>
 import { ref, computed, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Search, ArrowDown, Document, DocumentChecked, FolderOpened, Setting, DataLine, Management, Document as DocumentIcon, Grid, User, HomeFilled, Check, Close, Clock, CircleCheck, CircleClose } from '@element-plus/icons-vue'
+import { Search, ArrowDown, Document, DocumentChecked, FolderOpened, Setting, DataLine, Management, Document as DocumentIcon, Grid, User, HomeFilled, Check, Close, Clock, CircleCheck, CircleClose, Connection, Key, Cpu, Delete, Warning } from '@element-plus/icons-vue'
 import DashboardStats from '@/components/RoomBooking/DashboardStats.vue'
 
 export default {
@@ -587,7 +853,12 @@ export default {
     Close,
     Clock,
     CircleCheck,
-    CircleClose
+    CircleClose,
+    Connection,
+    Key,
+    Cpu,
+    Delete,
+    Warning
   },
   setup() {
     // 主导航标签页
@@ -851,6 +1122,42 @@ export default {
       comment: ''
     })
 
+    // 设置模块相关
+    const expandedGroups = ref(['房屋类型权限设置'])
+    const activeSettingsMenu = ref('预约人员')
+
+    // 预约人员数据
+    const reservationPersonnel = ref([
+      {
+        id: 1,
+        topic: '校园会议室第一、二层、三层可预约人员',
+        allowedPersonnel: ['杨培', '郭培', '刘佳君', '赵芳', '演示帐', '王明', '陈东', '周涛', '赵楷强', '张培'],
+        classrooms: [
+          '多媒体教室（101）', '多媒体教室（102）', '多媒体教室（103）', 
+          '多媒体教室（104）', '多媒体教室（105）', '多媒体教室（106）',
+          '多媒体教室（107）', '多媒体教室（108）', '多媒体教室（109）', '多媒体教室（110）'
+        ],
+        creator: '张三',
+        createTime: '2024.03.08 09:16:26'
+      },
+      {
+        id: 2,
+        topic: '校园会议室四层可预约人员',
+        allowedPersonnel: ['杨培', '郭培', '刘佳君', '赵芳', '演示帐'],
+        classrooms: ['清洁间'],
+        creator: '张三',
+        createTime: '2024.03.08 09:16:26'
+      }
+    ])
+
+    // 时间设置数据
+    const timeSettings = reactive({
+      openTime: '',
+      closeTime: '',
+      advanceDays: 7,
+      cancelHours: 2
+    })
+
     // 计算属性
     const filteredRooms = computed(() => {
       return rooms.value.filter(room => {
@@ -1087,6 +1394,32 @@ export default {
       ElMessage.success('审批提交成功！')
     }
 
+    // 设置模块相关方法
+    const toggleGroup = (groupName) => {
+      const index = expandedGroups.value.indexOf(groupName)
+      if (index > -1) {
+        expandedGroups.value.splice(index, 1)
+      } else {
+        expandedGroups.value.push(groupName)
+      }
+    }
+
+    const setActiveSettingsMenu = (menu) => {
+      activeSettingsMenu.value = menu
+    }
+
+    const viewMore = (item) => {
+      console.log('查看详情:', item)
+    }
+
+    const editItem = (item) => {
+      console.log('编辑:', item)
+    }
+
+    const deleteItem = (item) => {
+      console.log('删除:', item)
+    }
+
     return {
       mainTabs,
       activeMainTab,
@@ -1118,12 +1451,21 @@ export default {
       approvalDialogVisible,
       currentApprovalItem,
       approvalForm,
+      expandedGroups,
+      activeSettingsMenu,
+      reservationPersonnel,
+      timeSettings,
       Search,
       setActiveMenuItem,
       setActiveCategory,
       toggleCategory,
       setActiveApprovalStatus,
       getStatusCount,
+      toggleGroup,
+      setActiveSettingsMenu,
+      viewMore,
+      editItem,
+      deleteItem,
       bookRoom,
       handleTimeRangeChange,
       getStatusType,
@@ -1298,7 +1640,7 @@ export default {
 
 /* 审批左侧状态导航 */
 .approval-sidebar {
-  width: 240px;
+  width: 220px;
   background: white;
   border-right: 1px solid #e8e8e8;
   display: flex;
@@ -1306,7 +1648,7 @@ export default {
 }
 
 .approval-sidebar .sidebar-header {
-  padding: 20px 25px;
+  padding: 15px 18px;
   border-bottom: 1px solid #e8e8e8;
   background: #4A90E2;
   color: white;
@@ -1314,7 +1656,7 @@ export default {
 
 .approval-sidebar .sidebar-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -1323,15 +1665,15 @@ export default {
 }
 
 .approval-sidebar .menu-item {
-  padding: 18px 25px;
+  padding: 12px 18px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   cursor: pointer;
   color: #666;
   border-left: 3px solid transparent;
   transition: all 0.3s;
-  font-size: 16px;
+  font-size: 13px;
   line-height: 1.5;
   white-space: nowrap;
   position: relative;
@@ -1346,21 +1688,26 @@ export default {
   background: #e6f3ff;
   color: #4A90E2;
   border-left-color: #4A90E2;
+  font-weight: 500;
 }
 
 .approval-sidebar .menu-item .count {
   margin-left: auto;
   background: #f0f0f0;
   color: #666;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 11px;
   font-weight: 600;
 }
 
 .approval-sidebar .menu-item.active .count {
   background: #4A90E2;
   color: white;
+}
+
+.approval-sidebar .menu-item .el-icon {
+  font-size: 13px;
 }
 
 /* 审批主要内容区域 */
@@ -1377,6 +1724,193 @@ export default {
   padding: 20px;
   margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 设置模块样式 */
+.settings-management {
+  min-height: calc(100vh - 120px);
+}
+
+.settings-layout {
+  display: flex;
+  height: calc(100vh - 120px);
+  gap: 0;
+}
+
+/* 设置左侧层级导航 */
+.settings-sidebar {
+  width: 260px;
+  background: white;
+  border-right: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-sidebar .sidebar-header {
+  padding: 20px 25px;
+  border-bottom: 1px solid #e8e8e8;
+  background: #4A90E2;
+  color: white;
+}
+
+.settings-sidebar .sidebar-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.settings-sidebar .sidebar-menu {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* 菜单组样式 */
+.menu-group {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.menu-group-title {
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+  background: #fafafa;
+  transition: all 0.3s;
+  border-left: 3px solid transparent;
+}
+
+.menu-group-title:hover {
+  background: #f0f7ff;
+  color: #4A90E2;
+}
+
+.menu-group-title.expanded {
+  background: #e6f3ff;
+  color: #4A90E2;
+  border-left-color: #4A90E2;
+}
+
+.menu-group-title .el-icon {
+  transition: transform 0.3s;
+  font-size: 14px;
+}
+
+.menu-group-title.expanded .el-icon {
+  transform: rotate(180deg);
+}
+
+/* 子菜单样式 */
+.submenu {
+  background: white;
+}
+
+.submenu-item {
+  padding: 10px 18px 10px 35px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #666;
+  font-size: 13px;
+  transition: all 0.3s;
+  border-left: 3px solid transparent;
+}
+
+.submenu-item:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.submenu-item.active {
+  background: #e6f3ff;
+  color: #4A90E2;
+  border-left-color: #4A90E2;
+  font-weight: 500;
+}
+
+.submenu-item .el-icon {
+  font-size: 13px;
+}
+
+/* 设置主要内容区域 */
+.settings-main-content {
+  flex: 1;
+  background: #f9f9f9;
+  overflow-y: auto;
+}
+
+.settings-page {
+  padding: 20px;
+  min-height: 100%;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.page-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* 内容表格样式 */
+.content-table {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.personnel-list,
+.classroom-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  max-width: 300px;
+}
+
+.person-tag,
+.classroom-tag {
+  display: inline-block;
+  background: #f0f2f5;
+  color: #666;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* 设置表单样式 */
+.settings-form {
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-desc {
+  margin-left: 15px;
+  color: #999;
+  font-size: 13px;
 }
 
 .truncated-text {
@@ -1460,7 +1994,7 @@ export default {
 
 /* 左侧功能菜单 */
 .left-sidebar {
-  width: 300px;
+  width: 260px;
   background: white;
   border-right: 1px solid #e8e8e8;
   display: flex;
@@ -1468,15 +2002,15 @@ export default {
 }
 
 .sidebar-header {
-  padding: 20px 25px;
+  padding: 15px 18px;
   border-bottom: 1px solid #e8e8e8;
   background: #4A90E2;
   color: white;
 }
 
-.sidebar-header h3 {
+.left-sidebar .sidebar-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -1485,15 +2019,15 @@ export default {
 }
 
 .menu-item {
-  padding: 20px 25px;
+  padding: 10px 18px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   cursor: pointer;
   color: #666;
   border-left: 3px solid transparent;
   transition: all 0.3s;
-  font-size: 16px;
+  font-size: 13px;
   line-height: 1.5;
   white-space: nowrap;
 }
@@ -1507,6 +2041,11 @@ export default {
   background: #e6f3ff;
   color: #4A90E2;
   border-left-color: #4A90E2;
+  font-weight: 500;
+}
+
+.menu-item .el-icon {
+  font-size: 13px;
 }
 
 /* 中间楼宇分类 */
@@ -1734,20 +2273,23 @@ export default {
 /* 响应式设计 */
 @media (max-width: 1200px) {
   .booking-layout,
-  .approval-layout {
+  .approval-layout,
+  .settings-layout {
     flex-direction: column;
   }
   
   .left-sidebar, 
   .middle-sidebar,
-  .approval-sidebar {
+  .approval-sidebar,
+  .settings-sidebar {
     width: 100%;
     height: auto;
   }
   
   .left-sidebar,
-  .approval-sidebar {
-    max-height: 150px;
+  .approval-sidebar,
+  .settings-sidebar {
+    max-height: 200px;
   }
   
   .middle-sidebar {
@@ -1761,6 +2303,16 @@ export default {
   
   .filter-item {
     min-width: 100%;
+  }
+
+  .page-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    justify-content: center;
   }
 }
 
@@ -1781,22 +2333,30 @@ export default {
   
   .left-sidebar, 
   .middle-sidebar,
-  .approval-sidebar {
-    max-height: 120px;
+  .approval-sidebar,
+  .settings-sidebar {
+    max-height: 150px;
   }
   
   .my-bookings, 
   .all-bookings,
-  .approval-main-content {
+  .approval-main-content,
+  .settings-main-content {
+    padding: 15px;
+  }
+
+  .settings-page {
     padding: 15px;
   }
   
-  .search-filters {
+  .search-filters,
+  .settings-form {
     padding: 15px;
   }
   
   .booking-table,
-  .approval-table {
+  .approval-table,
+  .content-table {
     padding: 15px;
   }
   
@@ -1807,6 +2367,11 @@ export default {
   
   .filter-actions .el-button {
     width: 100%;
+  }
+
+  .personnel-list,
+  .classroom-list {
+    max-width: 100%;
   }
 }
 </style>
