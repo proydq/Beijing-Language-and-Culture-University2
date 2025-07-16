@@ -542,10 +542,141 @@
 
       <!-- 数据记录 -->
       <div v-else-if="activeMainTab === 'records'" class="records-content">
-        <div class="content-placeholder">
-          <el-icon size="64"><folder-opened /></el-icon>
-          <h3>数据记录</h3>
-          <p>数据记录功能正在开发中...</p>
+        <div class="records-management">
+          <div class="records-layout">
+            <!-- 左侧数据记录导航 -->
+            <div class="records-sidebar">
+              <div class="sidebar-header">
+                <h3>数据记录</h3>
+              </div>
+              <div class="sidebar-menu">
+                <!-- 出入记录 -->
+                <div class="menu-group">
+                  <div 
+                    :class="['menu-group-title', { expanded: expandedRecordsGroups.includes('出入记录') }]"
+                    @click="toggleRecordsGroup('出入记录')"
+                  >
+                    <el-icon><arrow-down /></el-icon>
+                    <span>出入记录</span>
+                  </div>
+                  <div v-if="expandedRecordsGroups.includes('出入记录')" class="submenu">
+                    <div 
+                      :class="['submenu-item', { active: activeRecordsMenu === '教室使用记录' }]"
+                      @click="setActiveRecordsMenu('教室使用记录')"
+                    >
+                      <el-icon><document /></el-icon>
+                      <span>教室使用记录</span>
+                    </div>
+                    <div 
+                      :class="['submenu-item', { active: activeRecordsMenu === '远程开门记录' }]"
+                      @click="setActiveRecordsMenu('远程开门记录')"
+                    >
+                      <el-icon><key /></el-icon>
+                      <span>远程开门记录</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 中间楼层选择 -->
+            <div class="records-middle-sidebar">
+              <div class="search-box">
+                <el-input
+                  v-model="floorSearchKeyword"
+                  placeholder="请输入楼层搜索"
+                  :prefix-icon="Search"
+                  size="small"
+                />
+              </div>
+              <div class="floor-list">
+                <div 
+                  :class="['floor-item', { active: activeFloor === '全部' }]"
+                  @click="setActiveFloor('全部')"
+                >
+                  全部
+                </div>
+                <div 
+                  v-for="floor in floorList" 
+                  :key="floor"
+                  :class="['floor-item', { active: activeFloor === floor }]"
+                  @click="setActiveFloor(floor)"
+                >
+                  {{ floor }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 右侧主要内容区域 -->
+            <div class="records-main-content">
+              <!-- 教室使用记录 -->
+              <div v-if="activeRecordsMenu === '教室使用记录'" class="records-page">
+                <!-- 搜索和排序区域 -->
+                <div class="search-sort-bar">
+                  <div class="sort-section">
+                    <span class="sort-label">排序方式：</span>
+                    <el-select v-model="sortMethod" style="width: 150px;">
+                      <el-option label="按预约次数" value="booking_count" />
+                      <el-option label="按使用时长" value="usage_time" />
+                      <el-option label="按创建时间" value="create_time" />
+                    </el-select>
+                  </div>
+                  <div class="export-section">
+                    <el-button type="primary">导出当前页</el-button>
+                    <el-button>导出全部数据</el-button>
+                  </div>
+                </div>
+
+                <!-- 数据表格 -->
+                <div class="records-table">
+                  <el-table :data="paginatedRecordsData" style="width: 100%" size="default">
+                    <el-table-column prop="roomName" label="预约教室" width="220" />
+                    <el-table-column prop="bookingCount" label="预约次数（次）" width="160" align="center" />
+                    <el-table-column prop="usageHours" label="预约累计时长（分）" width="180" align="center" />
+                    <el-table-column prop="actualUsers" label="实计预约人数（人）" width="180" align="center" />
+                    <el-table-column label="操作" width="140" align="center">
+                      <template #default="scope">
+                        <el-button type="primary" link size="small" @click="viewDetails(scope.row)">
+                          查看详情
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+
+                <!-- 分页 -->
+                <div class="pagination">
+                  <el-pagination
+                    v-model:current-page="recordsPagination.currentPage"
+                    v-model:page-size="recordsPagination.pageSize"
+                    :page-sizes="[10, 20, 50, 100]"
+                    :total="recordsPagination.total"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    @size-change="handleRecordsSizeChange"
+                    @current-change="handleRecordsCurrentChange"
+                  />
+                </div>
+              </div>
+
+              <!-- 远程开门记录 -->
+              <div v-else-if="activeRecordsMenu === '远程开门记录'" class="records-page">
+                <div class="content-placeholder">
+                  <el-icon size="64"><key /></el-icon>
+                  <h3>远程开门记录</h3>
+                  <p>此功能正在开发中，敬请期待...</p>
+                </div>
+              </div>
+
+              <!-- 默认页面 -->
+              <div v-else class="records-page">
+                <div class="content-placeholder">
+                  <el-icon size="64"><folder-opened /></el-icon>
+                  <h3>请选择数据记录类型</h3>
+                  <p>请从左侧菜单选择要查看的数据记录</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1126,6 +1257,107 @@ export default {
     const expandedGroups = ref(['房屋类型权限设置'])
     const activeSettingsMenu = ref('预约人员')
 
+    // 数据记录模块相关
+    const expandedRecordsGroups = ref(['出入记录'])
+    const activeRecordsMenu = ref('教室使用记录')
+    const activeFloor = ref('全部')
+    const floorSearchKeyword = ref('')
+    const sortMethod = ref('booking_count')
+
+    // 楼层列表
+    const floorList = ['达力楼', 'B2', 'B1', '1F', '2F', '3F', '4F', '5F', '6F', '司管楼', '雪行楼', '峻明楼', '正主楼', '老楼楼']
+
+    // 数据记录分页
+    const recordsPagination = reactive({
+      currentPage: 1,
+      pageSize: 10,
+      total: 0
+    })
+
+    // 教室使用记录数据
+    const recordsData = ref([
+      {
+        id: 1,
+        roomName: '多媒体教室（101）',
+        bookingCount: 50,
+        usageHours: 500,
+        actualUsers: 56,
+        floor: '达力楼'
+      },
+      {
+        id: 2,
+        roomName: '多媒体教室（102）',
+        bookingCount: 48,
+        usageHours: 480,
+        actualUsers: 46,
+        floor: '达力楼'
+      },
+      {
+        id: 3,
+        roomName: '多媒体教室（103）',
+        bookingCount: 46,
+        usageHours: 460,
+        actualUsers: 43,
+        floor: '达力楼'
+      },
+      {
+        id: 4,
+        roomName: '多媒体教室（104）',
+        bookingCount: 43,
+        usageHours: 430,
+        actualUsers: 38,
+        floor: '达力楼'
+      },
+      {
+        id: 5,
+        roomName: '多媒体教室（105）',
+        bookingCount: 38,
+        usageHours: 380,
+        actualUsers: 27,
+        floor: '达力楼'
+      },
+      {
+        id: 6,
+        roomName: '多媒体教室（106）',
+        bookingCount: 36,
+        usageHours: 360,
+        actualUsers: 16,
+        floor: '达力楼'
+      },
+      {
+        id: 7,
+        roomName: '多媒体教室（107）',
+        bookingCount: 33,
+        usageHours: 330,
+        actualUsers: 10,
+        floor: '达力楼'
+      },
+      {
+        id: 8,
+        roomName: '多媒体教室（108）',
+        bookingCount: 32,
+        usageHours: 320,
+        actualUsers: 10,
+        floor: '达力楼'
+      },
+      {
+        id: 9,
+        roomName: '多媒体教室（109）',
+        bookingCount: 30,
+        usageHours: 300,
+        actualUsers: 8,
+        floor: '达力楼'
+      },
+      {
+        id: 10,
+        roomName: '多媒体教室（110）',
+        bookingCount: 28,
+        usageHours: 280,
+        actualUsers: 5,
+        floor: '达力楼'
+      }
+    ])
+
     // 预约人员数据
     const reservationPersonnel = ref([
       {
@@ -1186,6 +1418,34 @@ export default {
       const end = start + approvalPagination.pageSize
       approvalPagination.total = filteredApprovalData.value.length
       return filteredApprovalData.value.slice(start, end)
+    })
+
+    // 数据记录分页计算
+    const filteredRecordsData = computed(() => {
+      let filtered = recordsData.value
+
+      // 根据楼层过滤
+      if (activeFloor.value !== '全部') {
+        filtered = filtered.filter(item => item.floor === activeFloor.value)
+      }
+
+      // 根据排序方式排序
+      if (sortMethod.value === 'booking_count') {
+        filtered.sort((a, b) => b.bookingCount - a.bookingCount)
+      } else if (sortMethod.value === 'usage_time') {
+        filtered.sort((a, b) => b.usageHours - a.usageHours)
+      } else if (sortMethod.value === 'create_time') {
+        filtered.sort((a, b) => a.id - b.id)
+      }
+
+      return filtered
+    })
+
+    const paginatedRecordsData = computed(() => {
+      const start = (recordsPagination.currentPage - 1) * recordsPagination.pageSize
+      const end = start + recordsPagination.pageSize
+      recordsPagination.total = filteredRecordsData.value.length
+      return filteredRecordsData.value.slice(start, end)
     })
 
     // 根据选中状态过滤审批数据
@@ -1420,6 +1680,37 @@ export default {
       console.log('删除:', item)
     }
 
+    // 数据记录相关方法
+    const toggleRecordsGroup = (groupName) => {
+      const index = expandedRecordsGroups.value.indexOf(groupName)
+      if (index > -1) {
+        expandedRecordsGroups.value.splice(index, 1)
+      } else {
+        expandedRecordsGroups.value.push(groupName)
+      }
+    }
+
+    const setActiveRecordsMenu = (menu) => {
+      activeRecordsMenu.value = menu
+    }
+
+    const setActiveFloor = (floor) => {
+      activeFloor.value = floor
+      recordsPagination.currentPage = 1  // 重置到第一页
+    }
+
+    const viewDetails = (row) => {
+      console.log('查看详情:', row)
+    }
+
+    const handleRecordsSizeChange = (size) => {
+      recordsPagination.pageSize = size
+    }
+
+    const handleRecordsCurrentChange = (page) => {
+      recordsPagination.currentPage = page
+    }
+
     return {
       mainTabs,
       activeMainTab,
@@ -1453,6 +1744,16 @@ export default {
       approvalForm,
       expandedGroups,
       activeSettingsMenu,
+      expandedRecordsGroups,
+      activeRecordsMenu,
+      activeFloor,
+      floorSearchKeyword,
+      sortMethod,
+      floorList,
+      recordsPagination,
+      recordsData,
+      filteredRecordsData,
+      paginatedRecordsData,
       reservationPersonnel,
       timeSettings,
       Search,
@@ -1463,7 +1764,10 @@ export default {
       getStatusCount,
       toggleGroup,
       setActiveSettingsMenu,
-      viewMore,
+      toggleRecordsGroup,
+      setActiveRecordsMenu,
+      setActiveFloor,
+      viewDetails,
       editItem,
       deleteItem,
       bookRoom,
@@ -1485,6 +1789,8 @@ export default {
       handleAllBookingCurrentChange,
       handleApprovalSizeChange,
       handleApprovalCurrentChange,
+      handleRecordsSizeChange,
+      handleRecordsCurrentChange,
       showApprovalDialog,
       handleApprovalDialogClose,
       submitApproval
@@ -1613,6 +1919,207 @@ export default {
   background: white;
   margin: 20px;
   border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 数据记录模块样式 */
+.records-management {
+  min-height: calc(100vh - 120px);
+}
+
+.records-layout {
+  display: flex;
+  height: calc(100vh - 120px);
+  gap: 0;
+}
+
+/* 数据记录左侧导航 */
+.records-sidebar {
+  width: 200px;
+  background: white;
+  border-right: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: column;
+}
+
+.records-sidebar .sidebar-header {
+  padding: 15px 18px;
+  border-bottom: 1px solid #e8e8e8;
+  background: #4A90E2;
+  color: white;
+}
+
+.records-sidebar .sidebar-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.records-sidebar .sidebar-menu {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* 数据记录菜单组样式 - 与设置页面一致 */
+.records-sidebar .menu-group {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.records-sidebar .menu-group-title {
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+  background: #fafafa;
+  transition: all 0.3s;
+  border-left: 3px solid transparent;
+}
+
+.records-sidebar .menu-group-title:hover {
+  background: #f0f7ff;
+  color: #4A90E2;
+}
+
+.records-sidebar .menu-group-title.expanded {
+  background: #e6f3ff;
+  color: #4A90E2;
+  border-left-color: #4A90E2;
+}
+
+.records-sidebar .menu-group-title .el-icon {
+  transition: transform 0.3s;
+  font-size: 14px;
+}
+
+.records-sidebar .menu-group-title.expanded .el-icon {
+  transform: rotate(180deg);
+}
+
+/* 数据记录子菜单样式 - 与设置页面一致 */
+.records-sidebar .submenu {
+  background: white;
+}
+
+.records-sidebar .submenu-item {
+  padding: 10px 18px 10px 35px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #666;
+  font-size: 13px;
+  transition: all 0.3s;
+  border-left: 3px solid transparent;
+}
+
+.records-sidebar .submenu-item:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.records-sidebar .submenu-item.active {
+  background: #e6f3ff;
+  color: #4A90E2;
+  border-left-color: #4A90E2;
+  font-weight: 500;
+}
+
+.records-sidebar .submenu-item .el-icon {
+  font-size: 13px;
+}
+
+/* 中间楼层导航 */
+.records-middle-sidebar {
+  width: 200px;
+  background: white;
+  border-right: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+}
+
+.records-middle-sidebar .search-box {
+  margin-bottom: 15px;
+}
+
+.records-middle-sidebar .floor-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.records-middle-sidebar .floor-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s;
+  color: #666;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.records-middle-sidebar .floor-item:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.records-middle-sidebar .floor-item.active {
+  background: #4A90E2;
+  color: white;
+}
+
+/* 数据记录主要内容区域 */
+.records-main-content {
+  flex: 1;
+  background: #f9f9f9;
+  overflow-y: auto;
+}
+
+.records-page {
+  padding: 20px;
+  min-height: 100%;
+}
+
+/* 搜索排序栏 */
+.search-sort-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 15px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.sort-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sort-label {
+  font-size: 14px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.export-section {
+  display: flex;
+  gap: 10px;
+}
+
+/* 数据记录表格 */
+.records-table {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -2274,26 +2781,31 @@ export default {
 @media (max-width: 1200px) {
   .booking-layout,
   .approval-layout,
-  .settings-layout {
+  .settings-layout,
+  .records-layout {
     flex-direction: column;
   }
   
   .left-sidebar, 
   .middle-sidebar,
   .approval-sidebar,
-  .settings-sidebar {
+  .settings-sidebar,
+  .records-sidebar,
+  .records-middle-sidebar {
     width: 100%;
     height: auto;
   }
   
   .left-sidebar,
   .approval-sidebar,
-  .settings-sidebar {
-    max-height: 200px;
+  .settings-sidebar,
+  .records-sidebar {
+    max-height: 150px;
   }
   
-  .middle-sidebar {
-    max-height: 200px;
+  .middle-sidebar,
+  .records-middle-sidebar {
+    max-height: 150px;
   }
   
   .filter-row {
@@ -2312,6 +2824,19 @@ export default {
   }
 
   .header-actions {
+    justify-content: center;
+  }
+
+  .search-sort-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sort-section {
+    justify-content: center;
+  }
+
+  .export-section {
     justify-content: center;
   }
 }
@@ -2334,18 +2859,22 @@ export default {
   .left-sidebar, 
   .middle-sidebar,
   .approval-sidebar,
-  .settings-sidebar {
-    max-height: 150px;
+  .settings-sidebar,
+  .records-sidebar,
+  .records-middle-sidebar {
+    max-height: 120px;
   }
   
   .my-bookings, 
   .all-bookings,
   .approval-main-content,
-  .settings-main-content {
+  .settings-main-content,
+  .records-main-content {
     padding: 15px;
   }
 
-  .settings-page {
+  .settings-page,
+  .records-page {
     padding: 15px;
   }
   
@@ -2356,7 +2885,8 @@ export default {
   
   .booking-table,
   .approval-table,
-  .content-table {
+  .content-table,
+  .records-table {
     padding: 15px;
   }
   
@@ -2372,6 +2902,14 @@ export default {
   .personnel-list,
   .classroom-list {
     max-width: 100%;
+  }
+
+  .export-section {
+    flex-direction: column;
+  }
+
+  .export-section .el-button {
+    width: 100%;
   }
 }
 </style>
