@@ -340,101 +340,127 @@
       <!-- 审批管理 -->
       <div v-else-if="activeMainTab === 'approval'" class="approval-content">
         <div class="approval-management">
-          <!-- 搜索过滤区域 -->
-          <div class="search-filters">
-            <div class="filter-row">
-              <div class="filter-item">
-                <label>借用/预约名称</label>
-                <el-input 
-                  v-model="approvalFilters.name" 
-                  placeholder="请输入信息" 
-                  style="width: 200px;"
-                />
+          <div class="approval-layout">
+            <!-- 左侧状态导航 -->
+            <div class="approval-sidebar">
+              <div class="sidebar-header">
+                <h3>审批状态</h3>
               </div>
-              <div class="filter-item">
-                <label>预约人</label>
-                <el-input 
-                  v-model="approvalFilters.applicant" 
-                  placeholder="请输入信息" 
-                  style="width: 200px;"
-                />
-              </div>
-              <div class="filter-item">
-                <label>预约时间</label>
-                <el-date-picker
-                  v-model="approvalFilters.timeRange"
-                  type="datetimerange"
-                  range-separator="~"
-                  start-placeholder="请选择开始时间"
-                  end-placeholder="请选择开始时间"
-                  style="width: 350px;"
-                />
-              </div>
-              <div class="filter-actions">
-                <el-button type="primary" @click="handleApprovalSearch">搜索</el-button>
-                <el-button @click="handleResetApprovalFilters">重置</el-button>
+              <div class="sidebar-menu">
+                <div 
+                  v-for="status in approvalStatusItems" 
+                  :key="status.key"
+                  :class="['menu-item', { active: activeApprovalStatus === status.key }]"
+                  @click="setActiveApprovalStatus(status.key)"
+                >
+                  <el-icon>
+                    <component :is="status.icon" />
+                  </el-icon>
+                  <span>{{ status.label }}</span>
+                  <span class="count">({{ getStatusCount(status.key) }})</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- 审批列表 -->
-          <div class="approval-table">
-            <el-table :data="paginatedApprovalData" style="width: 100%">
-              <el-table-column prop="bookingName" label="借用/预约名称" width="200" />
-              <el-table-column prop="bookingTime" label="预约时间" width="300" />
-              <el-table-column prop="description" label="描述" min-width="200">
-                <template #default="scope">
-                  <el-tooltip :content="scope.row.description" placement="top">
-                    <span class="truncated-text">{{ scope.row.description }}</span>
-                  </el-tooltip>
-                </template>
-              </el-table-column>
-              <el-table-column prop="applicant" label="预约人" width="100" />
-              <el-table-column prop="roomName" label="预约对象" width="150" />
-              <el-table-column prop="auditStatus" label="预约状态" width="100">
-                <template #default="scope">
-                  <el-tag
-                    :type="getApprovalStatusType(scope.row.auditStatus)"
-                    size="small"
-                  >
-                    {{ scope.row.auditStatus }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" width="150">
-                <template #default="scope">
-                  <el-button 
-                    v-if="scope.row.auditStatus === '待审核'"
-                    type="success" 
-                    size="small" 
-                    @click="showApprovalDialog(scope.row)"
-                  >
-                    立即审批
-                  </el-button>
-                  <el-button 
-                    v-else
-                    type="info" 
-                    size="small" 
-                    disabled
-                  >
-                    已审批
-                  </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
+            <!-- 右侧主要内容区域 -->
+            <div class="approval-main-content">
+              <!-- 搜索过滤区域 -->
+              <div class="search-filters">
+                <div class="filter-row">
+                  <div class="filter-item">
+                    <label>借用/预约名称</label>
+                    <el-input 
+                      v-model="approvalFilters.name" 
+                      placeholder="请输入信息" 
+                      style="width: 200px;"
+                    />
+                  </div>
+                  <div class="filter-item">
+                    <label>预约人</label>
+                    <el-input 
+                      v-model="approvalFilters.applicant" 
+                      placeholder="请输入信息" 
+                      style="width: 200px;"
+                    />
+                  </div>
+                  <div class="filter-item">
+                    <label>预约时间</label>
+                    <el-date-picker
+                      v-model="approvalFilters.timeRange"
+                      type="datetimerange"
+                      range-separator="~"
+                      start-placeholder="请选择开始时间"
+                      end-placeholder="请选择开始时间"
+                      style="width: 350px;"
+                    />
+                  </div>
+                  <div class="filter-actions">
+                    <el-button type="primary" @click="handleApprovalSearch">搜索</el-button>
+                    <el-button @click="handleResetApprovalFilters">重置</el-button>
+                  </div>
+                </div>
+              </div>
 
-          <!-- 分页 -->
-          <div class="pagination">
-            <el-pagination
-              v-model:current-page="approvalPagination.currentPage"
-              v-model:page-size="approvalPagination.pageSize"
-              :page-sizes="[10, 20, 50, 100]"
-              :total="approvalPagination.total"
-              layout="total, sizes, prev, pager, next, jumper"
-              @size-change="handleApprovalSizeChange"
-              @current-change="handleApprovalCurrentChange"
-            />
+              <!-- 审批列表 -->
+              <div class="approval-table">
+                <el-table :data="filteredApprovalData" style="width: 100%">
+                  <el-table-column prop="bookingName" label="借用/预约名称" width="200" />
+                  <el-table-column prop="bookingTime" label="预约时间" width="300" />
+                  <el-table-column prop="description" label="描述" min-width="200">
+                    <template #default="scope">
+                      <el-tooltip :content="scope.row.description" placement="top">
+                        <span class="truncated-text">{{ scope.row.description }}</span>
+                      </el-tooltip>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="applicant" label="预约人" width="100" />
+                  <el-table-column prop="roomName" label="预约对象" width="150" />
+                  <el-table-column prop="auditStatus" label="预约状态" width="100">
+                    <template #default="scope">
+                      <el-tag
+                        :type="getApprovalStatusType(scope.row.auditStatus)"
+                        size="small"
+                      >
+                        {{ scope.row.auditStatus }}
+                      </el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="150">
+                    <template #default="scope">
+                      <el-button 
+                        v-if="scope.row.auditStatus === '待审核'"
+                        type="success" 
+                        size="small" 
+                        @click="showApprovalDialog(scope.row)"
+                      >
+                        立即审批
+                      </el-button>
+                      <el-button 
+                        v-else
+                        type="info" 
+                        size="small" 
+                        disabled
+                      >
+                        已审批
+                      </el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+
+              <!-- 分页 -->
+              <div class="pagination">
+                <el-pagination
+                  v-model:current-page="approvalPagination.currentPage"
+                  v-model:page-size="approvalPagination.pageSize"
+                  :page-sizes="[10, 20, 50, 100]"
+                  :total="approvalPagination.total"
+                  layout="total, sizes, prev, pager, next, jumper"
+                  @size-change="handleApprovalSizeChange"
+                  @current-change="handleApprovalCurrentChange"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -538,7 +564,7 @@
 <script>
 import { ref, computed, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Search, ArrowDown, Document, DocumentChecked, FolderOpened, Setting, DataLine, Management, Document as DocumentIcon, Grid, User, HomeFilled, Check, Close } from '@element-plus/icons-vue'
+import { Search, ArrowDown, Document, DocumentChecked, FolderOpened, Setting, DataLine, Management, Document as DocumentIcon, Grid, User, HomeFilled, Check, Close, Clock, CircleCheck, CircleClose } from '@element-plus/icons-vue'
 import DashboardStats from '@/components/RoomBooking/DashboardStats.vue'
 
 export default {
@@ -558,7 +584,10 @@ export default {
     User,
     HomeFilled,
     Check,
-    Close
+    Close,
+    Clock,
+    CircleCheck,
+    CircleClose
   },
   setup() {
     // 主导航标签页
@@ -738,6 +767,15 @@ export default {
       total: 0
     })
 
+    // 审批状态导航
+    const approvalStatusItems = [
+      { key: 'all', label: '待审批', icon: 'Clock' },
+      { key: 'approved', label: '已通过', icon: 'CircleCheck' },
+      { key: 'rejected', label: '已拒绝', icon: 'CircleClose' }
+    ]
+
+    const activeApprovalStatus = ref('all')
+
     // 审批数据
     const approvalData = ref([
       {
@@ -784,6 +822,24 @@ export default {
         applicant: '李老师',
         roomName: '多媒体教室（105）',
         auditStatus: '拒绝'
+      },
+      {
+        id: 6,
+        bookingName: '【学生活动】社团会议',
+        bookingTime: '2025.04.25 第一节次、第二节次',
+        description: '学生社团定期会议活动安排',
+        applicant: '李同学',
+        roomName: '多媒体教室（106）',
+        auditStatus: '通过'
+      },
+      {
+        id: 7,
+        bookingName: '【教师培训】新教师培训',
+        bookingTime: '2025.04.26 第一节次、第二节次、第三节次',
+        description: '新入职教师培训活动',
+        applicant: '王主任',
+        roomName: '多媒体教室（107）',
+        auditStatus: '拒绝'
       }
     ])
 
@@ -821,8 +877,37 @@ export default {
     const paginatedApprovalData = computed(() => {
       const start = (approvalPagination.currentPage - 1) * approvalPagination.pageSize
       const end = start + approvalPagination.pageSize
-      approvalPagination.total = approvalData.value.length
-      return approvalData.value.slice(start, end)
+      approvalPagination.total = filteredApprovalData.value.length
+      return filteredApprovalData.value.slice(start, end)
+    })
+
+    // 根据选中状态过滤审批数据
+    const filteredApprovalData = computed(() => {
+      let filtered = approvalData.value
+      
+      // 根据状态过滤
+      if (activeApprovalStatus.value === 'all') {
+        filtered = filtered.filter(item => item.auditStatus === '待审核')
+      } else if (activeApprovalStatus.value === 'approved') {
+        filtered = filtered.filter(item => item.auditStatus === '通过')
+      } else if (activeApprovalStatus.value === 'rejected') {
+        filtered = filtered.filter(item => item.auditStatus === '拒绝')
+      }
+
+      // 根据搜索条件过滤
+      if (approvalFilters.name) {
+        filtered = filtered.filter(item => 
+          item.bookingName.includes(approvalFilters.name)
+        )
+      }
+      
+      if (approvalFilters.applicant) {
+        filtered = filtered.filter(item => 
+          item.applicant.includes(approvalFilters.applicant)
+        )
+      }
+
+      return filtered
     })
 
     // 方法
@@ -921,6 +1006,22 @@ export default {
     }
 
     // 审批管理相关方法
+    const setActiveApprovalStatus = (status) => {
+      activeApprovalStatus.value = status
+      approvalPagination.currentPage = 1  // 重置到第一页
+    }
+
+    const getStatusCount = (status) => {
+      if (status === 'all') {
+        return approvalData.value.filter(item => item.auditStatus === '待审核').length
+      } else if (status === 'approved') {
+        return approvalData.value.filter(item => item.auditStatus === '通过').length
+      } else if (status === 'rejected') {
+        return approvalData.value.filter(item => item.auditStatus === '拒绝').length
+      }
+      return 0
+    }
+
     const getApprovalStatusType = (status) => {
       const statusMap = {
         '待审核': 'warning',
@@ -1008,9 +1109,12 @@ export default {
       paginatedBookingData,
       paginatedAllBookingData,
       paginatedApprovalData,
+      filteredApprovalData,
       approvalFilters,
       approvalPagination,
       approvalData,
+      approvalStatusItems,
+      activeApprovalStatus,
       approvalDialogVisible,
       currentApprovalItem,
       approvalForm,
@@ -1018,6 +1122,8 @@ export default {
       setActiveMenuItem,
       setActiveCategory,
       toggleCategory,
+      setActiveApprovalStatus,
+      getStatusCount,
       bookRoom,
       handleTimeRangeChange,
       getStatusType,
@@ -1181,9 +1287,88 @@ export default {
 
 /* 审批管理样式 */
 .approval-management {
+  min-height: calc(100vh - 120px);
+}
+
+.approval-layout {
+  display: flex;
+  height: calc(100vh - 120px);
+  gap: 0;
+}
+
+/* 审批左侧状态导航 */
+.approval-sidebar {
+  width: 240px;
+  background: white;
+  border-right: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: column;
+}
+
+.approval-sidebar .sidebar-header {
+  padding: 20px 25px;
+  border-bottom: 1px solid #e8e8e8;
+  background: #4A90E2;
+  color: white;
+}
+
+.approval-sidebar .sidebar-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.approval-sidebar .sidebar-menu {
+  flex: 1;
+}
+
+.approval-sidebar .menu-item {
+  padding: 18px 25px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  color: #666;
+  border-left: 3px solid transparent;
+  transition: all 0.3s;
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: nowrap;
+  position: relative;
+}
+
+.approval-sidebar .menu-item:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.approval-sidebar .menu-item.active {
+  background: #e6f3ff;
+  color: #4A90E2;
+  border-left-color: #4A90E2;
+}
+
+.approval-sidebar .menu-item .count {
+  margin-left: auto;
+  background: #f0f0f0;
+  color: #666;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.approval-sidebar .menu-item.active .count {
+  background: #4A90E2;
+  color: white;
+}
+
+/* 审批主要内容区域 */
+.approval-main-content {
+  flex: 1;
   padding: 20px;
   background: #f9f9f9;
-  min-height: calc(100vh - 120px);
+  overflow-y: auto;
 }
 
 .approval-table {
@@ -1548,16 +1733,20 @@ export default {
 
 /* 响应式设计 */
 @media (max-width: 1200px) {
-  .booking-layout {
+  .booking-layout,
+  .approval-layout {
     flex-direction: column;
   }
   
-  .left-sidebar, .middle-sidebar {
+  .left-sidebar, 
+  .middle-sidebar,
+  .approval-sidebar {
     width: 100%;
     height: auto;
   }
   
-  .left-sidebar {
+  .left-sidebar,
+  .approval-sidebar {
     max-height: 150px;
   }
   
@@ -1590,11 +1779,15 @@ export default {
     grid-template-columns: 1fr;
   }
   
-  .left-sidebar, .middle-sidebar {
+  .left-sidebar, 
+  .middle-sidebar,
+  .approval-sidebar {
     max-height: 120px;
   }
   
-  .my-bookings, .all-bookings {
+  .my-bookings, 
+  .all-bookings,
+  .approval-main-content {
     padding: 15px;
   }
   
@@ -1602,7 +1795,8 @@ export default {
     padding: 15px;
   }
   
-  .booking-table {
+  .booking-table,
+  .approval-table {
     padding: 15px;
   }
   
