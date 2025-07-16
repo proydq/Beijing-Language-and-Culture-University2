@@ -30,42 +30,19 @@
             </div>
           </div>
 
-          <!-- 审批记录分组 -->
+          <!-- 运营记录分组 -->
           <div class="menu-group">
             <div 
-              :class="['menu-group-title', { expanded: expandedGroups.includes('approval') }]"
-              @click="toggleGroup('approval')"
-            >
-              <el-icon><document-checked /></el-icon>
-              <span>审批记录</span>
-              <el-icon class="expand-icon"><arrow-down /></el-icon>
-            </div>
-            <div v-show="expandedGroups.includes('approval')" class="submenu">
-              <div 
-                v-for="item in approvalRecordTypes" 
-                :key="item.key"
-                :class="['submenu-item', { active: activeRecordType === item.key }]"
-                @click="setActiveRecordType(item.key)"
-              >
-                <el-icon><component :is="item.icon" /></el-icon>
-                <span>{{ item.label }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 系统记录分组 -->
-          <div class="menu-group">
-            <div 
-              :class="['menu-group-title', { expanded: expandedGroups.includes('system') }]"
-              @click="toggleGroup('system')"
+              :class="['menu-group-title', { expanded: expandedGroups.includes('operation') }]"
+              @click="toggleGroup('operation')"
             >
               <el-icon><setting /></el-icon>
-              <span>系统记录</span>
+              <span>运营记录</span>
               <el-icon class="expand-icon"><arrow-down /></el-icon>
             </div>
-            <div v-show="expandedGroups.includes('system')" class="submenu">
+            <div v-show="expandedGroups.includes('operation')" class="submenu">
               <div 
-                v-for="item in systemRecordTypes" 
+                v-for="item in operationRecordTypes" 
                 :key="item.key"
                 :class="['submenu-item', { active: activeRecordType === item.key }]"
                 @click="setActiveRecordType(item.key)"
@@ -126,82 +103,57 @@
               <el-select v-model="sortBy" style="width: 150px;">
                 <el-option label="时间降序" value="time_desc" />
                 <el-option label="时间升序" value="time_asc" />
-                <el-option label="名称A-Z" value="name_asc" />
-                <el-option label="名称Z-A" value="name_desc" />
+                <el-option label="名称升序" value="name_asc" />
+                <el-option label="名称降序" value="name_desc" />
               </el-select>
             </div>
           </div>
 
-          <!-- 记录表格 -->
+          <!-- 内容表格 -->
           <div class="content-table">
             <el-table 
+              v-loading="loading"
               :data="filteredRecords" 
-              :loading="loading"
-              border
-              stripe
               style="width: 100%"
+              stripe
             >
-              <el-table-column prop="id" label="ID" width="80" />
-              
               <el-table-column prop="title" label="记录标题" min-width="200">
-                <template #default="scope">
+                <template #default="{ row }">
                   <div class="record-title">
-                    <el-icon>
-                      <component :is="getRecordIcon(scope.row.type)" />
+                    <el-icon :color="getRecordTypeColor(row.type)">
+                      <component :is="getRecordIcon(row.type)" />
                     </el-icon>
-                    <span>{{ scope.row.title }}</span>
+                    <span>{{ row.title }}</span>
                   </div>
                 </template>
               </el-table-column>
-
-              <el-table-column prop="type" label="记录类型" width="120">
-                <template #default="scope">
-                  <el-tag 
-                    :type="getRecordTypeColor(scope.row.type)" 
-                    size="small"
-                  >
-                    {{ getRecordTypeLabel(scope.row.type) }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-
               <el-table-column prop="operator" label="操作人" width="120" />
-
               <el-table-column prop="createTime" label="创建时间" width="160">
-                <template #default="scope">
+                <template #default="{ row }">
                   <div class="time-info">
                     <el-icon><clock /></el-icon>
-                    <span>{{ formatTime(scope.row.createTime) }}</span>
+                    <span>{{ formatTime(row.createTime) }}</span>
                   </div>
                 </template>
               </el-table-column>
-
               <el-table-column prop="status" label="状态" width="100">
-                <template #default="scope">
-                  <el-tag 
-                    :type="getStatusColor(scope.row.status)" 
-                    size="small"
-                  >
-                    {{ scope.row.status }}
+                <template #default="{ row }">
+                  <el-tag :type="getStatusColor(row.status)" size="small">
+                    {{ row.status }}
                   </el-tag>
                 </template>
               </el-table-column>
-
               <el-table-column label="操作" width="150" fixed="right">
-                <template #default="scope">
-                  <el-button 
-                    type="primary" 
-                    size="small" 
-                    @click="viewRecord(scope.row)"
-                  >
+                <template #default="{ row }">
+                  <el-button type="primary" size="small" @click="viewRecord(row)">
                     <el-icon><view /></el-icon>
                     查看
                   </el-button>
                   <el-button 
+                    v-if="canDelete(row)" 
                     type="danger" 
                     size="small" 
-                    @click="deleteRecord(scope.row)"
-                    v-if="canDelete(scope.row)"
+                    @click="deleteRecord(row)"
                   >
                     <el-icon><delete /></el-icon>
                     删除
@@ -230,15 +182,18 @@
     <!-- 记录详情对话框 -->
     <el-dialog
       v-model="detailDialogVisible"
-      :title="currentRecord?.title"
+      title="记录详情"
       width="600px"
+      destroy-on-close
     >
       <div v-if="currentRecord" class="record-detail">
         <div class="detail-item">
-          <label>记录类型：</label>
-          <el-tag :type="getRecordTypeColor(currentRecord.type)">
-            {{ getRecordTypeLabel(currentRecord.type) }}
-          </el-tag>
+          <label>标题：</label>
+          <span>{{ currentRecord.title }}</span>
+        </div>
+        <div class="detail-item">
+          <label>类型：</label>
+          <span>{{ getRecordTypeLabel(currentRecord.type) }}</span>
         </div>
         <div class="detail-item">
           <label>操作人：</label>
@@ -311,7 +266,7 @@ export default {
     const searchKeyword = ref('')
     const floorSearchKeyword = ref('')
     const sortBy = ref('time_desc')
-    const activeRecordType = ref('all_bookings')
+    const activeRecordType = ref('data_booking_records')
     const activeFloor = ref('')
     const expandedGroups = ref(['booking'])
 
@@ -328,22 +283,12 @@ export default {
 
     // 记录类型定义
     const bookingRecordTypes = [
-      { key: 'all_bookings', label: '全部预约', icon: 'Document' },
-      { key: 'approved_bookings', label: '已通过预约', icon: 'Calendar' },
-      { key: 'rejected_bookings', label: '已拒绝预约', icon: 'Warning' },
-      { key: 'completed_bookings', label: '已完成预约', icon: 'Connection' }
+      { key: 'data_booking_records', label: '数据借用记录', icon: 'Document' }
     ]
 
-    const approvalRecordTypes = [
-      { key: 'all_approvals', label: '全部审批', icon: 'DocumentChecked' },
-      { key: 'pending_approvals', label: '待处理审批', icon: 'Clock' },
-      { key: 'completed_approvals', label: '已完成审批', icon: 'Connection' }
-    ]
-
-    const systemRecordTypes = [
-      { key: 'user_operations', label: '用户操作记录', icon: 'User' },
-      { key: 'system_logs', label: '系统日志', icon: 'Setting' },
-      { key: 'error_logs', label: '错误日志', icon: 'Warning' }
+    const operationRecordTypes = [
+      { key: 'operation_door_records', label: '运营开门记录', icon: 'Connection' },
+      { key: 'access_records', label: '出入记录', icon: 'User' }
     ]
 
     const floors = ['全部', '1F', '2F', '3F', '4F', '5F', '6F', 'B1', 'B2']
@@ -353,7 +298,7 @@ export default {
       {
         id: 1,
         title: '【教师培训】多媒体教室预约成功',
-        type: 'booking_approved',
+        type: 'data_booking_records',
         operator: '张老师',
         createTime: '2025-07-16 14:30:00',
         status: '成功',
@@ -362,7 +307,7 @@ export default {
       {
         id: 2,
         title: '【学生活动】会议室预约被拒绝',
-        type: 'booking_rejected',
+        type: 'data_booking_records',
         operator: '李同学',
         createTime: '2025-07-16 10:15:00',
         status: '失败',
@@ -370,36 +315,36 @@ export default {
       },
       {
         id: 3,
-        title: '【审批操作】通过预约申请',
-        type: 'approval_approved',
-        operator: '管理员',
+        title: '【人员进入】张老师进入教学楼',
+        type: 'access_records',
+        operator: '张老师',
         createTime: '2025-07-16 09:45:00',
         status: '成功',
-        content: '管理员审批通过了王主任的会议室预约申请'
+        content: '张老师通过门禁卡进入教学楼一楼大厅'
       },
       {
         id: 4,
-        title: '【用户登录】系统登录记录',
-        type: 'user_login',
-        operator: '张老师',
+        title: '【开门记录】管理员远程开门',
+        type: 'operation_door_records',
+        operator: '管理员',
         createTime: '2025-07-16 08:30:00',
         status: '成功',
-        content: '用户张老师成功登录房屋借用管理系统'
+        content: '管理员远程为访客开启教学楼大门'
       },
       {
         id: 5,
-        title: '【系统错误】数据库连接异常',
-        type: 'system_error',
-        operator: '系统',
+        title: '【人员离开】李同学离开会议室',
+        type: 'access_records',
+        operator: '李同学',
         createTime: '2025-07-16 03:20:00',
-        status: '错误',
-        content: '系统在凌晨3点20分出现数据库连接异常，已自动重连成功'
+        status: '成功',
+        content: '李同学离开会议室A，门禁系统记录离开时间'
       }
     ])
 
     // 计算属性
     const showFloorFilter = computed(() => {
-      return activeRecordType.value.includes('bookings')
+      return activeRecordType.value.includes('access') || activeRecordType.value.includes('door')
     })
 
     const filteredFloors = computed(() => {
@@ -413,9 +358,8 @@ export default {
       let data = props.recordsData.length > 0 ? props.recordsData : mockRecordsData.value
 
       // 按记录类型过滤
-      if (activeRecordType.value !== 'all_bookings') {
-        // 这里可以根据不同的记录类型进行过滤
-        // 现在暂时显示所有数据
+      if (activeRecordType.value !== 'all_records') {
+        data = data.filter(item => item.type === activeRecordType.value)
       }
 
       // 按搜索关键词过滤
@@ -468,59 +412,53 @@ export default {
 
     const setActiveFloor = (floor) => {
       activeFloor.value = floor === '全部' ? '' : floor
-      pagination.currentPage = 1
     }
 
     const getRecordIcon = (type) => {
       const iconMap = {
-        'booking_approved': 'Calendar',
-        'booking_rejected': 'Warning',
-        'approval_approved': 'DocumentChecked',
-        'user_login': 'User',
-        'system_error': 'Warning'
+        'data_booking_records': 'Document',
+        'access_records': 'User',
+        'operation_door_records': 'Connection'
       }
       return iconMap[type] || 'Document'
     }
 
     const getRecordTypeColor = (type) => {
       const colorMap = {
-        'booking_approved': 'success',
-        'booking_rejected': 'danger',
-        'approval_approved': 'primary',
-        'user_login': 'info',
-        'system_error': 'warning'
+        'data_booking_records': '#4A90E2',
+        'access_records': '#67C23A',
+        'operation_door_records': '#E6A23C'
       }
-      return colorMap[type] || 'info'
+      return colorMap[type] || '#909399'
     }
 
     const getRecordTypeLabel = (type) => {
       const labelMap = {
-        'booking_approved': '预约通过',
-        'booking_rejected': '预约拒绝',
-        'approval_approved': '审批通过',
-        'user_login': '用户登录',
-        'system_error': '系统错误'
+        'data_booking_records': '数据借用记录',
+        'access_records': '出入记录',
+        'operation_door_records': '运营开门记录'
       }
-      return labelMap[type] || '其他'
+      return labelMap[type] || '未知类型'
     }
 
     const getStatusColor = (status) => {
       const colorMap = {
         '成功': 'success',
         '失败': 'danger',
-        '错误': 'warning'
+        '错误': 'danger',
+        '警告': 'warning',
+        '处理中': 'info'
       }
       return colorMap[status] || 'info'
     }
 
     const formatTime = (timeStr) => {
-      if (!timeStr) return ''
       return timeStr.replace(' ', '\n')
     }
 
     const canDelete = (record) => {
       // 只有某些类型的记录可以删除
-      return record.type !== 'system_error'
+      return record.type === 'data_booking_records' && record.status === '失败'
     }
 
     const viewRecord = (record) => {
@@ -531,16 +469,17 @@ export default {
     const deleteRecord = async (record) => {
       try {
         await ElMessageBox.confirm(
-          `确定要删除记录"${record.title}"吗？`,
-          '确认删除',
+          `确认删除记录"${record.title}"吗？`,
+          '删除确认',
           {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
             type: 'warning'
           }
         )
         
         ElMessage.success('删除成功')
-        // 这里应该调用API删除记录
-        console.log('删除记录:', record)
+        // 这里添加实际的删除逻辑
       } catch {
         // 用户取消删除
       }
@@ -571,8 +510,7 @@ export default {
       currentRecord,
       pagination,
       bookingRecordTypes,
-      approvalRecordTypes,
-      systemRecordTypes,
+      operationRecordTypes,
       showFloorFilter,
       filteredFloors,
       filteredRecords,
