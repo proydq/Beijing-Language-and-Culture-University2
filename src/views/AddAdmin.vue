@@ -40,7 +40,6 @@
             <el-icon><arrow-left /></el-icon>
             返回
           </el-button>
-          <h2>添加管理员</h2>
         </div>
 
         <!-- 选择角色区域 -->
